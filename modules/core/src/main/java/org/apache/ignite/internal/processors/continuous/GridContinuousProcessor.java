@@ -616,6 +616,8 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
         if (!ctx.isDaemon() && data != null) {
             for (DiscoveryDataItem item : data.items) {
                 try {
+                    item.hnd.p2pUnmarshal(data.nodeId, ctx);
+
                     if (item.prjPred != null)
                         ctx.resource().injectGeneric(item.prjPred);
 
@@ -646,6 +648,8 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
                         LocalRoutineInfo info = e.getValue();
 
                         try {
+                            info.hnd.p2pUnmarshal(data.nodeId, ctx);
+
                             if (info.prjPred != null)
                                 ctx.resource().injectGeneric(info.prjPred);
 
