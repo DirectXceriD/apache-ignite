@@ -74,19 +74,17 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
 
     /** {@inheritDoc} */
     @Override protected void beforeTest() throws Exception {
-        super.beforeTest();
-
         startGridsMultiThreaded(NODES - 1);
 
         client = true;
 
         startGrid(NODES - 1);
+
+        client = false;
     }
 
     /** {@inheritDoc} */
     @Override protected void afterTest() throws Exception {
-        super.afterTest();
-
         stopAllGrids();
     }
 
@@ -149,6 +147,7 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
 
         testContinuousQuery(ccfg, false);
     }
+
     /**
      * @throws Exception If failed.
      */
@@ -243,9 +242,7 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
 
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
-        QueryCursor<?> cur = null;
-
-        final Class<Factory<CacheEntryEventFilter>> evtFilterFactory =
+        final Class<Factory<CacheEntryEventFilter>> evtFilterFactoryCls =
             (Class<Factory<CacheEntryEventFilter>>)getExternalClassLoader().
                 loadClass("org.apache.ignite.tests.p2p.CacheDeploymentEntryEventFilterFactory");
 
@@ -253,7 +250,7 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
 
         ContinuousQuery<Integer, Integer> qry = new ContinuousQuery<>();
 
-        TestLocalListener localLsnr = new TestLocalListener() {
+        TestLocalListener locLsnr = new TestLocalListener() {
             @Override public void onEvent(Iterable<CacheEntryEvent<? extends Integer, ? extends Integer>> evts)
                 throws CacheEntryListenerException {
                 for (CacheEntryEvent<? extends Integer, ? extends Integer> evt : evts) {
@@ -264,48 +261,43 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
             }
         };
 
+        qry.setLocalListener(locLsnr);
+
+        qry.setRemoteFilterFactory(
+            (Factory<? extends CacheEntryEventFilter<Integer, Integer>>)(Object)evtFilterFactoryCls.newInstance());
+
         MutableCacheEntryListenerConfiguration<Integer, Integer> lsnrCfg =
             new MutableCacheEntryListenerConfiguration<>(
-                new FactoryBuilder.SingletonFactory<>(localLsnr),
+                new FactoryBuilder.SingletonFactory<>(locLsnr),
                 (Factory<? extends CacheEntryEventFilter<? super Integer, ? super Integer>>)
-                    (Object)evtFilterFactory.newInstance(),
+                    (Object)evtFilterFactoryCls.newInstance(),
                 true,
                 true
             );
 
-        qry.setLocalListener(localLsnr);
+        IgniteCache<Integer, Integer> cache;
 
-        qry.setRemoteFilterFactory(
-            (Factory<? extends CacheEntryEventFilter<Integer, Integer>>)(Object)evtFilterFactory.newInstance());
+        if (isClient)
+            cache = grid(NODES - 1).cache(ccfg.getName());
+        else
+            cache = grid(rnd.nextInt(NODES - 1)).cache(ccfg.getName());
 
-        IgniteCache<Integer, Integer> cache = null;
-
-        try {
-            if (isClient)
-                cache = grid(NODES - 1).cache(ccfg.getName());
-            else
-                cache = grid(rnd.nextInt(NODES - 1)).cache(ccfg.getName());
-
-            cur = cache.query(qry);
-
+        try (QueryCursor<?> cur = cache.query(qry)) {
             cache.registerCacheEntryListener(lsnrCfg);
 
-            for (int i = 0; i < 10; i++)
+            if (joinNode()) {
+                startGrid(NODES);
+                awaitPartitionMapExchange();
+            }
+
+            for (int i = 0; i < 100; i++)
                 cache.put(i, i);
 
             assertTrue(latch.await(3, TimeUnit.SECONDS));
         }
-        finally {
-            if (cur != null)
-                cur.close();
-
-            if (cache != null)
-                cache.deregisterCacheEntryListener(lsnrCfg);
-        }
     }
 
     /**
-     *
      * @param cacheMode Cache mode.
      * @param backups Number of backups.
      * @param atomicityMode Cache atomicity mode.
@@ -325,6 +317,13 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
             ccfg.setBackups(backups);
 
         return ccfg;
+    }
+
+    /**
+     * @return If {@code true}, then a new node will be started after registering listeners.
+     */
+    protected boolean joinNode() {
+        return false;
     }
 
     /**
