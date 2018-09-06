@@ -616,21 +616,24 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
         if (!ctx.isDaemon() && data != null) {
             for (DiscoveryDataItem item : data.items) {
                 try {
-                    item.hnd.p2pUnmarshal(data.nodeId, ctx);
+                    if (ctx.config().isPeerClassLoadingEnabled())
+                        item.hnd.p2pUnmarshal(data.nodeId, ctx);
 
                     if (item.prjPred != null)
                         ctx.resource().injectGeneric(item.prjPred);
 
                     // Register handler only if local node passes projection predicate.
                     if ((item.prjPred == null || item.prjPred.apply(ctx.discovery().localNode())) &&
-                            !locInfos.containsKey(item.routineId))
+                            !locInfos.containsKey(item.routineId)) {
                         registerHandler(data.nodeId, item.routineId, item.hnd, item.bufSize, item.interval,
-                                item.autoUnsubscribe, false);
+                            item.autoUnsubscribe, false);
+                    }
 
-                    if (!item.autoUnsubscribe)
+                    if (!item.autoUnsubscribe) {
                         // Register routine locally.
                         locInfos.putIfAbsent(item.routineId, new LocalRoutineInfo(
-                                item.prjPred, item.hnd, item.bufSize, item.interval, item.autoUnsubscribe));
+                            item.prjPred, item.hnd, item.bufSize, item.interval, item.autoUnsubscribe));
+                    }
                 }
                 catch (IgniteCheckedException e) {
                     U.error(log, "Failed to register continuous handler.", e);
@@ -648,7 +651,8 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
                         LocalRoutineInfo info = e.getValue();
 
                         try {
-                            info.hnd.p2pUnmarshal(data.nodeId, ctx);
+                            if (ctx.config().isPeerClassLoadingEnabled())
+                                info.hnd.p2pUnmarshal(data.nodeId, ctx);
 
                             if (info.prjPred != null)
                                 ctx.resource().injectGeneric(info.prjPred);
