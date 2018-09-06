@@ -82,6 +82,9 @@ public class ClientListenerProcessor extends GridProcessorAdapter {
     /** Executor service. */
     private ExecutorService execSvc;
 
+    /** Metrics. */
+    private final ClientListenerMetrics metrics = new ClientListenerMetrics();
+
     /**
      * @param ctx Kernal context.
      */
@@ -187,6 +190,26 @@ public class ClientListenerProcessor extends GridProcessorAdapter {
                 throw new IgniteCheckedException("Failed to start client connector processor.", e);
             }
         }
+
+        Thread metricsPrinter = new Thread(new Runnable() {
+            @Override public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(60_000L);
+                    }
+                    catch (Exception e) {
+                        return;
+                    }
+
+                    log.info(">>> JDBC SERVER METRICS: " + ctx.sqlListener().metrics().toString());
+                }
+            }
+        });
+
+        metricsPrinter.setName("jdbc-metrics-printer");
+        metricsPrinter.setDaemon(true);
+
+        metricsPrinter.start();
     }
 
     /**
@@ -540,5 +563,12 @@ public class ClientListenerProcessor extends GridProcessorAdapter {
 
             return sb.append(']').toString();
         }
+    }
+
+    /**
+     * @return Metrics.
+     */
+    public ClientListenerMetrics metrics() {
+        return metrics;
     }
 }

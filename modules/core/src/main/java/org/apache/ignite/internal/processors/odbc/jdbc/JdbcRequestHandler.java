@@ -32,7 +32,6 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 import javax.cache.configuration.Factory;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cache.query.BulkLoadContextCursor;
@@ -199,8 +198,21 @@ public class JdbcRequestHandler implements ClientListenerRequestHandler {
 
         try {
             switch (req.type()) {
-                case QRY_EXEC:
-                    return executeQuery((JdbcQueryExecuteRequest)req);
+                case QRY_EXEC: {
+                    boolean updateMetrics = ((JdbcQueryExecuteRequest)req).sqlQuery().contains("SELECT");
+
+                    long start = updateMetrics ? System.currentTimeMillis() : 0L;
+
+                    ClientListenerResponse resp = executeQuery((JdbcQueryExecuteRequest)req);
+
+                    if (updateMetrics) {
+                        long dur = System.currentTimeMillis() - start;
+
+                        ctx.sqlListener().metrics().onQueryExecuted(dur);
+                    }
+
+                    return resp;
+                }
 
                 case QRY_FETCH:
                     return fetchQuery((JdbcQueryFetchRequest)req);

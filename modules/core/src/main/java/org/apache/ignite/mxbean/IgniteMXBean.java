@@ -450,4 +450,16 @@ public interface IgniteMXBean {
         int payLoadSize,
         boolean procFromNioThread
     );
+
+    /**
+     * Clears node local map.
+     */
+    @MXBeanDescription("Clears local node map.")
+    void clearNodeLocalMap();
+
+    @MXBeanDescription("JDBC metrics as formatted string.")
+    String getJdbcFormatted();
+
+    @MXBeanDescription("Reset JDBC metrics.")
+    void jdbcReset() ;
 }

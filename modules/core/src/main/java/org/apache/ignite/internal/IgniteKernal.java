@@ -4190,6 +4190,21 @@ public class IgniteKernal implements IgniteEx, IgniteMXBean, Externalizable {
     }
 
     /** {@inheritDoc} */
+    @Override public void clearNodeLocalMap() {
+        ctx.cluster().get().clearNodeMap();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String getJdbcFormatted() {
+        return ctx.sqlListener().metrics().toString();
+    }
+
+    /** {@inheritDoc} */
+    @Override public void jdbcReset() {
+        ctx.sqlListener().metrics().reset();
+    }
+
+    /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(IgniteKernal.class, this);
     }
