@@ -36,14 +36,14 @@ public class VisorCacheToggleStatisticsTask extends VisorOneNodeTask<VisorCacheT
     }
 
     /**
-     * Job that rebalance caches.
+     * Job that switch statisticsEnabled flag for specified caches to specified state.
      */
     private static class VisorCachesToggleStatisticsJob extends VisorJob<VisorCacheToggleStatisticsTaskArg, Void> {
         /** */
         private static final long serialVersionUID = 0L;
 
         /**
-         * @param arg Caches names.
+         * @param arg Job argument object.
          * @param debug Debug flag.
          */
         private VisorCachesToggleStatisticsJob(VisorCacheToggleStatisticsTaskArg arg, boolean debug) {

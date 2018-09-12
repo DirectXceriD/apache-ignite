@@ -83,7 +83,7 @@ import scala.language.{implicitConversions, reflectiveCalls}
  *     cache -rebalance -c=<cache-name>
  *     cache -slp -c=<cache-name>
  *     cache -rlp -c=<cache-name>
- *     cache -statistics {-enable|-disable} -c=<cache-name>
+ *     cache -statistics=<on|off> -c=<cache-name>
  * }}}
  *
  * ====Arguments====
@@ -136,7 +136,7 @@ import scala.language.{implicitConversions, reflectiveCalls}
  *          Show list of lost partitions for specified cache.
  *     -rlp
  *          Reset lost partitions for specified cache.
- *     -statistics
+ *     -statistics=<-on|-off>
  *          Switch collection of statistics for specified cache.
  *     -p=<page size>
  *         Number of object to fetch from cache at once.
@@ -182,9 +182,9 @@ import scala.language.{implicitConversions, reflectiveCalls}
  *         Show list of lost partitions for cache with name 'cache'.
  *     cache -rlp -c=cache
  *         Reset lost partitions for cache with name 'cache'.
- *     cache -statistics -enable -c=cache
+ *     cache -statistics=on -c=cache
  *         Enable statistics for cache with name 'cache'.
- *     cache -statistics -disable -c=cache
+ *     cache -statistics=off -c=cache
  *         Disable statistics for cache with name 'cache'.
  *
  * }}}
@@ -288,7 +288,8 @@ class VisorCacheCommand extends VisorConsoleCommand {
             // Get cache stats data from all nodes.
             val aggrData = cacheData(node, cacheName, showSystem)
 
-            if (hasArgFlagIn("clear", "scan", "stop", "reset", "rebalance", "slp", "rlp", "statistics")) {
+            if (hasArgFlagIn("clear", "scan", "stop", "reset", "rebalance", "slp", "rlp")
+                || argValue("statistics", argLst).nonEmpty) {
                 if (cacheName.isEmpty)
                     askForCache("Select cache from:", node, showSystem
                         && !hasArgFlagIn("clear", "stop", "reset", "rebalance"), aggrData) match {
@@ -318,7 +319,7 @@ class VisorCacheCommand extends VisorConsoleCommand {
                                     VisorCacheLostPartitionsCommand().showLostPartitions(argLst, node)
                                 else if (hasArgFlag("rlp", argLst))
                                     VisorCacheResetLostPartitionsCommand().resetLostPartitions(argLst, node)
-                                else if (hasArgFlag("statistics", argLst))
+                                else if (argValue("statistics", argLst).nonEmpty)
                                     VisorCacheToggleStatisticsCommand().toggle(argLst, node)
                             }
                             else {
@@ -336,7 +337,7 @@ class VisorCacheCommand extends VisorConsoleCommand {
                                     warn("Showing of lost partitions list for system cache is not allowed: " + name)
                                 else if (hasArgFlag("rlp", argLst))
                                     warn("Reset of lost partitions for system cache is not allowed: " + name)
-                                else if (hasArgFlag("statistics", argLst))
+                                else if (argValue("statistics", argLst).nonEmpty)
                                     warn("Toggle of statistics collection for system cache is not allowed: " + name)
                             }
                         case None =>
@@ -766,7 +767,7 @@ object VisorCacheCommand {
             "cache -rebalance -c=<cache-name>",
             "cache -slp -c=<cache-name>",
             "cache -rlp -c=<cache-name>",
-            "cache -statistics {-enable|-disable} -c=<cache-name>"
+            "cache -statistics=<on|off> -c=<cache-name>"
   ),
         args = Seq(
             "-id8=<node-id>" -> Seq(
@@ -795,7 +796,7 @@ object VisorCacheCommand {
             "-slp" -> "Show list of lost partitions for specified cache.",
             "-rlp" -> "Reset lost partitions for specified cache.",
             "-rebalance" -> "Re-balance partitions for cache with specified name.",
-            "-statistics" -> "Change statistics collection state for cache with specified name.",
+            "-statistics=<on|off>" -> "Change statistics collection state for cache with specified name.",
             "-s=hi|mi|rd|wr|cn" -> Seq(
                 "Defines sorting type. Sorted by:",
                 "   hi Hits.",
@@ -858,9 +859,9 @@ object VisorCacheCommand {
             "cache -rebalance -c=cache" -> "Re-balance partitions for cache with name 'cache'.",
             "cache -slp -c=@c0" -> "Show list of lost partitions for cache with name taken from 'c0' memory variable.",
             "cache -rlp -c=@c0" -> "Reset lost partitions for cache with name taken from 'c0' memory variable.",
-            "cache -statistics -enable -c=@c0" ->
+            "cache -statistics=on -c=@c0" ->
                 "Enable statistics collection for cache with name taken from 'c0' memory variable.",
-            "cache -statistics -disable -c=@c0" ->
+            "cache -statistics=off -c=@c0" ->
                 "Disable statistics collection for cache with name taken from 'c0' memory variable."
         ),
         emptyArgs = cmd.cache,

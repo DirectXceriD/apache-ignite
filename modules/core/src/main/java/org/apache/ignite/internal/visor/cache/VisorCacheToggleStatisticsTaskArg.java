@@ -33,7 +33,7 @@ public class VisorCacheToggleStatisticsTaskArg extends VisorDataTransferObject {
     private static final long serialVersionUID = 0L;
 
     /** State to set to statisticsEnabled flag. */
-    private Boolean state;
+    private boolean state;
 
     /** Collection of cache names to toggle statisticsEnabled flag. */
     private Collection<String> cacheNames;
@@ -49,7 +49,7 @@ public class VisorCacheToggleStatisticsTaskArg extends VisorDataTransferObject {
      * @param state State to set to statisticsEnabled flag.
      * @param cacheNames Collection of cache names to toggle statisticsEnabled flag.
      */
-    public VisorCacheToggleStatisticsTaskArg(Boolean state, Collection<String> cacheNames) {
+    public VisorCacheToggleStatisticsTaskArg(boolean state, Collection<String> cacheNames) {
         this.state = state;
         this.cacheNames = cacheNames;
     }
@@ -57,7 +57,7 @@ public class VisorCacheToggleStatisticsTaskArg extends VisorDataTransferObject {
     /**
      * @return State to set to statisticsEnabled flag.
      */
-    public Boolean getState() {
+    public boolean getState() {
         return state;
     }
 

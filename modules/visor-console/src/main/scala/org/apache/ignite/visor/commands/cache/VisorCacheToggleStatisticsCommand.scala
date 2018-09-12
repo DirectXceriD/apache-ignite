@@ -115,15 +115,14 @@ class VisorCacheToggleStatisticsCommand {
             val cacheNames = new JavaSet[String]()
             cacheNames.add(cacheName)
 
-            val enable = if (hasArgName("enable", argLst))
-                true
-            else if (hasArgName("disable", argLst))
-                false
-            else {
-                warn("Goal state for collection of cache statistics is not specified.",
-                    "Use -enable or -disable flags to toggle collection of cache statistics.")
+            val enable = argValue("statistics", argLst) match {
+                case Some(state) if "on".equalsIgnoreCase(state) => true
+                case Some(state) if "off".equalsIgnoreCase(state) => false
+                case _ =>
+                    warn("Goal state for collection of cache statistics is not specified.",
+                        "Use -enable or -disable flags to toggle collection of cache statistics.")
 
-                return
+                    return
             }
 
             executeRandom(grp, classOf[VisorCacheToggleStatisticsTask],

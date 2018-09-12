@@ -22,12 +22,14 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.cache.CacheMetrics;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
@@ -91,6 +93,9 @@ public class VisorCache extends VisorDataTransferObject {
     /** Cache system state. */
     private boolean sys;
 
+    /** Checks whether statistics collection is enabled in this cache. */
+    private boolean statisticsEnabled;
+
     /**
      * Create data transfer object for given cache.
      */
@@ -119,7 +124,7 @@ public class VisorCache extends VisorDataTransferObject {
         backupSize = ca.localSizeLong(PEEK_ONHEAP_BACKUP);
         nearSize = ca.nearSize();
         size = primarySize + backupSize + nearSize;
-        
+
         partitions = ca.affinity().partitions();
         near = cctx.isNear();
 
@@ -127,6 +132,11 @@ public class VisorCache extends VisorDataTransferObject {
             metrics = new VisorCacheMetrics(ignite, name);
 
         sys = ignite.context().cache().systemCache(name);
+
+        GridCacheProcessor cacheProcessor = ignite.context().cache();
+        IgniteCache<Object, Object> c = cacheProcessor.jcache(name);
+        CacheMetrics m = c.localMetrics();
+        statisticsEnabled = m.isStatisticsEnabled();
     }
 
     /**
@@ -278,9 +288,16 @@ public class VisorCache extends VisorDataTransferObject {
         return metrics != null ? metrics.getOffHeapEntriesCount() : 0L;
     }
 
+    /**
+     * @return Checks whether statistics collection is enabled in this cache.
+     */
+    public boolean isStatisticsEnabled() {
+        return statisticsEnabled;
+    }
+
     /** {@inheritDoc} */
     @Override public byte getProtocolVersion() {
-        return V2;
+        return V3;
     }
 
     /** {@inheritDoc} */
@@ -298,6 +315,7 @@ public class VisorCache extends VisorDataTransferObject {
         out.writeBoolean(near);
         out.writeObject(metrics);
         out.writeBoolean(sys);
+        out.writeBoolean(statisticsEnabled);
     }
 
     /** {@inheritDoc} */
@@ -315,7 +333,10 @@ public class VisorCache extends VisorDataTransferObject {
         near = in.readBoolean();
         metrics = (VisorCacheMetrics)in.readObject();
 
-        sys = protoVer > V1 ? in.readBoolean() : metrics != null && metrics.isSystem();
+        sys = protoVer >= V2 ? in.readBoolean() : metrics != null && metrics.isSystem();
+
+        if (protoVer >= V3)
+            statisticsEnabled = in.readBoolean();
     }
 
     /** {@inheritDoc} */
