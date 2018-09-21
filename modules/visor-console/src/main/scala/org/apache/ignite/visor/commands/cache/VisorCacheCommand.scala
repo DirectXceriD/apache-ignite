@@ -289,7 +289,7 @@ class VisorCacheCommand extends VisorConsoleCommand {
             val aggrData = cacheData(node, cacheName, showSystem)
 
             if (hasArgFlagIn("clear", "scan", "stop", "reset", "rebalance", "slp", "rlp")
-                || argValue("statistics", argLst).nonEmpty) {
+                || hasArgName("statistics", argLst)) {
                 if (cacheName.isEmpty)
                     askForCache("Select cache from:", node, showSystem
                         && !hasArgFlagIn("clear", "stop", "reset", "rebalance"), aggrData) match {
@@ -319,7 +319,7 @@ class VisorCacheCommand extends VisorConsoleCommand {
                                     VisorCacheLostPartitionsCommand().showLostPartitions(argLst, node)
                                 else if (hasArgFlag("rlp", argLst))
                                     VisorCacheResetLostPartitionsCommand().resetLostPartitions(argLst, node)
-                                else if (argValue("statistics", argLst).nonEmpty)
+                                else if (hasArgName("statistics", argLst))
                                     VisorCacheToggleStatisticsCommand().toggle(argLst, node)
                             }
                             else {
@@ -337,7 +337,7 @@ class VisorCacheCommand extends VisorConsoleCommand {
                                     warn("Showing of lost partitions list for system cache is not allowed: " + name)
                                 else if (hasArgFlag("rlp", argLst))
                                     warn("Reset of lost partitions for system cache is not allowed: " + name)
-                                else if (argValue("statistics", argLst).nonEmpty)
+                                else if (hasArgName("statistics", argLst))
                                     warn("Toggle of statistics collection for system cache is not allowed: " + name)
                             }
                         case None =>

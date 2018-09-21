@@ -32,7 +32,7 @@ import scala.language.reflectiveCalls
  *
  * ====Specification====
  * {{{
- *     cache -statistics -enable|-disable -c=<cache name>
+ *     cache -statistics=<on|off> -c=<cache name>
  * }}}
  *
  * ====Arguments====
@@ -45,9 +45,9 @@ import scala.language.reflectiveCalls
  *
  * ====Examples====
  * {{{
- *    cache -statistics -enable -c=@c0
+ *    cache -statistics=on -c=@c0
  *        Enable collection of statistics for cache with name taken from 'c0' memory variable.
- *    cache -statistics -disable -c=@c0
+ *    cache -statistics=off -c=@c0
  *        Disable collection of statistics for cache with name taken from 'c0' memory variable.
  * }}}
  */
@@ -78,9 +78,9 @@ class VisorCacheToggleStatisticsCommand {
      * Toggle statistics collection for cache with specified name.
      *
      * ===Examples===
-     * <ex>cache -statistics -enable -c=cache</ex>
+     * <ex>cache -statistics=on -c=cache</ex>
      * Enable collection of statistics for cache with name 'cache'.
-     * <ex>cache -statistics -disable -c=cache</ex>
+     * <ex>cache -statistics=off -c=cache</ex>
      * Disable collection of statistics for cache with name 'cache'.
      *
      * @param argLst Command arguments.
@@ -120,7 +120,7 @@ class VisorCacheToggleStatisticsCommand {
                 case Some(state) if "off".equalsIgnoreCase(state) => false
                 case _ =>
                     warn("Goal state for collection of cache statistics is not specified.",
-                        "Use -enable or -disable flags to toggle collection of cache statistics.")
+                        "Use \"on\" and \"off\" value of \"statistics\" argument to toggle collection of cache statistics.")
 
                     return
             }
