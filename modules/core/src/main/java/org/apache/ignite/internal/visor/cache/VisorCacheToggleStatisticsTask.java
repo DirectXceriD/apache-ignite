@@ -17,8 +17,10 @@
 
 package org.apache.ignite.internal.visor.cache;
 
+import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.internal.processors.task.GridInternal;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorOneNodeTask;
 
@@ -52,8 +54,12 @@ public class VisorCacheToggleStatisticsTask extends VisorOneNodeTask<VisorCacheT
 
         /** {@inheritDoc} */
         @Override protected Void run(VisorCacheToggleStatisticsTaskArg arg) {
-            for(String cacheName: arg.getCacheNames())
-                ignite.cache(cacheName).enableStatistics(arg.getState());
+            try {
+                ignite.context().cache().enableStatistics(arg.getCacheNames(), arg.getState());
+            }
+            catch (IgniteCheckedException e) {
+                throw U.convertException(e);
+            }
 
             return null;
         }

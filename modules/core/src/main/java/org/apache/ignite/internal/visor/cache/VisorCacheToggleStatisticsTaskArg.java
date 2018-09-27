@@ -20,7 +20,7 @@ package org.apache.ignite.internal.visor.cache;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
+import java.util.Set;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
@@ -35,8 +35,8 @@ public class VisorCacheToggleStatisticsTaskArg extends VisorDataTransferObject {
     /** State to set to statisticsEnabled flag. */
     private boolean state;
 
-    /** Collection of cache names to toggle statisticsEnabled flag. */
-    private Collection<String> cacheNames;
+    /** Cache names to toggle statisticsEnabled flag. */
+    private Set<String> cacheNames;
 
     /**
      * Default constructor.
@@ -49,7 +49,7 @@ public class VisorCacheToggleStatisticsTaskArg extends VisorDataTransferObject {
      * @param state State to set to statisticsEnabled flag.
      * @param cacheNames Collection of cache names to toggle statisticsEnabled flag.
      */
-    public VisorCacheToggleStatisticsTaskArg(boolean state, Collection<String> cacheNames) {
+    public VisorCacheToggleStatisticsTaskArg(boolean state, Set<String> cacheNames) {
         this.state = state;
         this.cacheNames = cacheNames;
     }
@@ -62,9 +62,9 @@ public class VisorCacheToggleStatisticsTaskArg extends VisorDataTransferObject {
     }
 
     /**
-     * @return Collection of cache names to toggle statisticsEnabled flag.
+     * @return Cache names to toggle statisticsEnabled flag.
      */
-    public Collection<String> getCacheNames() {
+    public Set<String> getCacheNames() {
         return cacheNames;
     }
 
@@ -77,7 +77,7 @@ public class VisorCacheToggleStatisticsTaskArg extends VisorDataTransferObject {
     /** {@inheritDoc} */
     @Override protected void readExternalData(byte protoVer, ObjectInput in) throws IOException, ClassNotFoundException {
         state = in.readBoolean();
-        cacheNames = U.readCollection(in);
+        cacheNames = U.readSet(in);
     }
 
     /** {@inheritDoc} */

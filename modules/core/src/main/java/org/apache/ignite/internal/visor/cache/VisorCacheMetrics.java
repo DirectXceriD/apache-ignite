@@ -799,7 +799,7 @@ public class VisorCacheMetrics extends VisorDataTransferObject {
         if (in.available() > 0)
             cacheSize = in.readLong();
 
-        if (protoVer >= V2) {
+        if (protoVer > V1) {
             rebalancedKeys = in.readLong();
             estimatedRebalancingKeys = in.readLong();
         }

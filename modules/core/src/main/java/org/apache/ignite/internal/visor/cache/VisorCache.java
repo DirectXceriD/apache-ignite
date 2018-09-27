@@ -133,10 +133,7 @@ public class VisorCache extends VisorDataTransferObject {
 
         sys = ignite.context().cache().systemCache(name);
 
-        GridCacheProcessor cacheProcessor = ignite.context().cache();
-        IgniteCache<Object, Object> c = cacheProcessor.jcache(name);
-        CacheMetrics m = c.localMetrics();
-        statisticsEnabled = m.isStatisticsEnabled();
+        statisticsEnabled = ca.clusterMetrics().isStatisticsEnabled();
     }
 
     /**
