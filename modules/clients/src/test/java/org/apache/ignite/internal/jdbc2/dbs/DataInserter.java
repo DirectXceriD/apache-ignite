@@ -33,7 +33,7 @@ public class DataInserter {
     public static void main(String[] args) throws Exception {
         try (Connection conn = DriverManager.getConnection(connectionString)) {
             executeUpdate(conn, "create table TRAN_HISTORY\n" +
-                "(TRAN_ID  varchar(50) PRIMARY KEY,\n" +
+                "(TRAN_ID  varchar(50),\n" +
                 "ACCT_ID varchar(16) null,\n" +
                 "ACCT_CURR varchar(3) null,\n" +
                 "TRAN_CURR varchar(3) null,\n" +
@@ -60,7 +60,9 @@ public class DataInserter {
                 "EXCHANGE_RATE decimal(21, 10) null,\n" +
                 "DEAL_REF_NUM varchar(16) null,\n" +
                 "LST_UPDT_SYS_ID varchar(255) null,\n" +
-                "LST_UPDT_DTTM BIGINT null)");
+                "LST_UPDT_DTTM BIGINT null," +
+                "PRIMARY KEY(TRAN_ID, ACCT_ID)) " +
+                "WITH \"affinity_key=ACCT_ID\"");
 
             executeUpdate(conn, "CREATE INDEX accid_index ON TRAN_HISTORY(ACCT_ID)");
 
