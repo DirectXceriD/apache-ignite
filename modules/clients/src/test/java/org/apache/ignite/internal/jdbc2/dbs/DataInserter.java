@@ -39,9 +39,9 @@ public class DataInserter {
                 "TRAN_CURR varchar(3) null,\n" +
                 "LEDGER_BAL decimal(20, 4) null,\n" +
                 "AVAIL_BAL decimal(20, 4) null,\n" +
-                "VALUE_DATE date null,\n" +
-                "POSTING_DATE date null,\n" +
-                "TRAN_DATE date not null,\n" +
+                "VALUE_DATE BIGINT null,\n" +
+                "POSTING_DATE BIGINT null,\n" +
+                "TRAN_DATE BIGINT not null,\n" +
                 "PART_TRAN_SERL_NUM varchar(4) not null,\n" +
                 "TRAN_PARTICLR_CODE varchar(5) null,\n" +
                 "TRAN_PARTICLRS varchar(50) null,\n" +
@@ -53,14 +53,14 @@ public class DataInserter {
                 "TRAN_REF_NUM varchar(32) null,\n" +
                 "TRAN_REMARKS varchar(50) null,\n" +
                 "CHANNEL_ID varchar(10) null,\n" +
-                "LST_TRAN_DATE date null,\n" +
-                " SCHEME_CODE varchar(5) null,\n" +
+                "LST_TRAN_DATE BIGINT null,\n" +
+                "SCHEME_CODE varchar(5) null,\n" +
                 "REF_CURR_CODE varchar(3) null,\n" +
                 "EXCHANGE_RATE_CODE varchar(5) null,\n" +
-                " EXCHANGE_RATE decimal(21, 10) null,\n" +
+                "EXCHANGE_RATE decimal(21, 10) null,\n" +
                 "DEAL_REF_NUM varchar(16) null,\n" +
                 "LST_UPDT_SYS_ID varchar(255) null,\n" +
-                "LST_UPDT_DTTM date null)");
+                "LST_UPDT_DTTM BIGINT null)");
 
             executeUpdate(conn, "CREATE INDEX accid_index ON TRAN_HISTORY(ACCT_ID)");
 
@@ -138,7 +138,37 @@ public class DataInserter {
     private static void insertAccountId(Statement stmt, String acctId) throws Exception {
         String id = UUID.randomUUID().toString();
 
-        stmt.executeUpdate("INSERT INTO TRAN_HISTORY VALUES ('" + id + "','" + acctId + "','TWD','TWD',0.0000,906.0000,'2018-04-19', '2018-04-19','2018-04-19','25','CHQ03','982668','',26500.0000, 'L','D','','50000000','Zone Serial [ 25]','','2018-09-09','RQODA','TWD','', 1.0000000000,'','','2018-09-09')");
+        long time = System.currentTimeMillis();
+
+        stmt.executeUpdate("INSERT INTO TRAN_HISTORY VALUES (" +
+            "'" + id + "'," +
+            "'" + acctId + "'," +
+            "'TWD'," +
+            "'TWD'," +
+            "0.0000," +
+            "906.0000," +
+            time + "," +
+            time + "," +
+            time + "," +
+            "'25'," +
+            "'CHQ03'," +
+            "'982668'," +
+            "''," +
+            "26500.0000, " +
+            "'L'," +
+            "'D'," +
+            "''," +
+            "'50000000'," +
+            "'Zone Serial [ 25]'," +
+            "''," +
+            time + "," +
+            "'RQODA'," +
+            "'TWD'," +
+            "''," +
+            "1.0000000000," +
+            "''," +
+            "''," +
+            time + ")");
     }
 
     /**
