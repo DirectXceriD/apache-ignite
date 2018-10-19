@@ -28,6 +28,7 @@ import org.apache.ignite.internal.IgniteDeploymentCheckedException;
 import org.apache.ignite.internal.managers.deployment.GridDeployment;
 import org.apache.ignite.internal.managers.deployment.GridDeploymentInfo;
 import org.apache.ignite.internal.managers.deployment.GridDeploymentInfoBean;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 
@@ -39,6 +40,7 @@ class CacheContinuousQueryDeployableObject implements Externalizable {
     private static final long serialVersionUID = 0L;
 
     /** Serialized object. */
+    @GridToStringExclude
     private byte[] bytes;
 
     /** Deployment class name. */
