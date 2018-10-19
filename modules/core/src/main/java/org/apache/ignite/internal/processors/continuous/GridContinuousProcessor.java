@@ -652,7 +652,7 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
 
                         try {
                             if (ctx.config().isPeerClassLoadingEnabled())
-                                info.hnd.p2pUnmarshal(data.nodeId, ctx);
+                                info.hnd.p2pUnmarshal(clientNodeId, ctx);
 
                             if (info.prjPred != null)
                                 ctx.resource().injectGeneric(info.prjPred);
