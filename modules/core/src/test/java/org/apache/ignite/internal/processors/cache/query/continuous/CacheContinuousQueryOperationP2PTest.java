@@ -58,6 +58,9 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
     private static final int NODES = 5;
 
     /** */
+    private static final int UPDATES = 100;
+
+    /** */
     private boolean client;
 
     /** {@inheritDoc} */
@@ -238,6 +241,7 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
      */
     protected void testContinuousQuery(CacheConfiguration<Object, Object> ccfg, boolean isClient)
         throws Exception {
+
         ignite(0).createCache(ccfg);
 
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
@@ -246,7 +250,7 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
             (Class<Factory<CacheEntryEventFilter>>)getExternalClassLoader().
                 loadClass("org.apache.ignite.tests.p2p.CacheDeploymentEntryEventFilterFactory");
 
-        final CountDownLatch latch = new CountDownLatch(10);
+        final CountDownLatch latch = new CountDownLatch(UPDATES);
 
         ContinuousQuery<Integer, Integer> qry = new ContinuousQuery<>();
 
@@ -290,10 +294,11 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
                 awaitPartitionMapExchange();
             }
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < UPDATES; i++)
                 cache.put(i, i);
 
-            assertTrue(latch.await(3, TimeUnit.SECONDS));
+            assertTrue("Failed to wait for local listener invocations: " + latch.getCount(),
+                latch.await(3, TimeUnit.SECONDS));
         }
     }
 
