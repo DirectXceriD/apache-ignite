@@ -442,12 +442,19 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
                 UUID routineId = e.getKey();
                 LocalRoutineInfo info = e.getValue();
 
-                data.addItem(new DiscoveryDataItem(routineId,
+                try {
+                    if (ctx.config().isPeerClassLoadingEnabled())
+                        info.hnd.p2pMarshal(ctx);
+
+                    data.addItem(new DiscoveryDataItem(routineId,
                         info.prjPred,
                         info.hnd,
                         info.bufSize,
                         info.interval,
                         info.autoUnsubscribe));
+                } catch (IgniteCheckedException ex) {
+                    log.error("Failed to marshal ContinuousQueryProcessor discovery data.", ex);
+                }
             }
 
             return data;
