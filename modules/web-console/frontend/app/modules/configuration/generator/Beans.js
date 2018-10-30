@@ -346,6 +346,21 @@ export class Bean extends EmptyBean {
 
     /**
      * @param {String} id
+     * @param {String} name
+     * @param {Array} items
+     * @param {String} typeClsName
+     * @param {String} implClsName
+     * @returns {Bean}
+     */
+    enumCollectionProperty(id, name, items, typeClsName, implClsName = 'java.util.ArrayList') {
+        if (items && items.length)
+            this.properties.push({id, name, items, clsName: 'ENUM_COLLECTION', typeClsName, implClsName});
+
+        return this;
+    }
+
+    /**
+     * @param {String} id
      * @param {String} model
      * @param {String} [name]
      * @param {Boolean} [ordered]

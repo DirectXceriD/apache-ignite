@@ -541,6 +541,19 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                 else
                     sb.append(`${map.id}.put(${key}, ${this._toObject(map.valClsName, _.head(val))});`);
             }
+            else if (_.isArray(val) && map.valClsName === 'java.util.ArrayList') {
+                if (val.length > 1) {
+                    sb.startBlock(`${map.id}.put(${key},`);
+
+                    _.forEach(val, (item, idx) => {
+                        sb.append(`${this._toObject(map.valItemClsName, item)}${idx !== val.length - 1 ? ',' : ''}`);
+                    });
+
+                    sb.endBlock(');');
+                }
+                else
+                    sb.append(`${map.id}.put(${key}, Arrays.asList(${this._toObject(map.valItemClsName, _.head(val))}));`);
+            }
             else
                 sb.append(`${map.id}.put(${key}, ${this._toObject(map.valClsName, val)});`);
         });
@@ -654,6 +667,38 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                                 sb.emptyLine();
                             });
                         }
+
+                        this._setProperty(sb, id, prop.name, prop.id);
+                    }
+
+                    break;
+                case 'ENUM_COLLECTION':
+                    if (prop.implClsName === 'java.util.ArrayList') {
+                        const items = _.map(prop.items, (item) => this._toObject(prop.typeClsName, item));
+
+                        if (items.length > 1) {
+                            sb.startBlock(`${id}.set${_.upperFirst(prop.name)}(Arrays.asList(`);
+
+                            _.forEach(items, (item, i) => sb.append(item + (i !== items.length - 1 ? ',' : '')));
+
+                            sb.endBlock('));');
+                        }
+                        else
+                            this._setProperty(sb, id, prop.name, `Arrays.asList(${items})`);
+                    }
+                    else {
+                        const colTypeClsName = this.javaTypes.shortClassName(prop.typeClsName);
+                        const implClsName = this.javaTypes.shortClassName(prop.implClsName);
+
+                        sb.append(`${this.varInit(`${implClsName}<${colTypeClsName}>`, prop.id, vars)} = new ${implClsName}<>();`);
+
+                        sb.emptyLine();
+
+                        _.forEach(this._toObject(colTypeClsName, prop.items), (item) => {
+                            sb.append(`${prop.id}.add("${item}");`);
+
+                            sb.emptyLine();
+                        });
 
                         this._setProperty(sb, id, prop.name, prop.id);
                     }
@@ -801,6 +846,15 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                         imports.push(prop.implClsName);
                     }
                     else if (prop.implClsName === 'java.util.ArrayList')
+                        imports.push('java.util.Arrays');
+                    else
+                        imports.push(prop.implClsName);
+
+                    break;
+                case 'ENUM_COLLECTION':
+                    imports.push(prop.typeClsName);
+
+                    if (prop.implClsName === 'java.util.ArrayList')
                         imports.push('java.util.Arrays');
                     else
                         imports.push(prop.implClsName);

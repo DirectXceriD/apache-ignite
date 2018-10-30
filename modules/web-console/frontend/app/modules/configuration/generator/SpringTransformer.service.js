@@ -210,6 +210,7 @@ export default class IgniteSpringTransformer extends AbstractTransformer {
                     break;
                 case 'ARRAY':
                 case 'COLLECTION':
+                case 'ENUM_COLLECTION':
                     this._setCollection(sb, prop);
 
                     break;
