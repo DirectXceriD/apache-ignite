@@ -644,45 +644,46 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
     private void registerHandlerOnJoin(UUID srcNodeId, UUID routineId, IgnitePredicate<ClusterNode> nodeFilter,
         GridContinuousHandler hnd, int bufSize, long interval, boolean autoUnsubscribe) {
 
-        // Peer class loading cannot be performed before a node joins, so we delay the deployment.
-        // Run the deployment task in the system pool to avoid blocking of the discovery thread.
-        ctx.discovery().localJoinFuture().listen(f -> ctx.closure().runLocalSafe(() -> {
-            if (nodeFilter == null || nodeFilter.apply(ctx.discovery().localNode())) {
+        if (nodeFilter == null || nodeFilter.apply(ctx.discovery().localNode())) {
+            try {
+                registerHandler(srcNodeId,
+                    routineId,
+                    hnd,
+                    bufSize,
+                    interval,
+                    autoUnsubscribe,
+                    false);
+            }
+            catch (IgniteCheckedException e) {
+                U.error(log, "Failed to register continuous routine handler, ignore routine [" +
+                    "routineId=" + routineId +
+                    ", srcNodeId=" + srcNodeId + ']', e);
+            }
+        }
+        else {
+            if (log.isDebugEnabled()) {
+                log.debug("Do not register continuous routine, rejected by node filter [" +
+                    "routineId=" + routineId +
+                    ", srcNodeId=" + srcNodeId + ']');
+            }
+        }
+
+        if (ctx.config().isPeerClassLoadingEnabled()) {
+            // Peer class loading cannot be performed before a node joins, so we delay the deployment.
+            // Run the deployment task in the system pool to avoid blocking of the discovery thread.
+            ctx.discovery().localJoinFuture().listen(f -> ctx.closure().runLocalSafe(() -> {
                 try {
-                    if (ctx.config().isPeerClassLoadingEnabled())
-                        hnd.p2pUnmarshal(srcNodeId, ctx);
+                    hnd.p2pUnmarshal(srcNodeId, ctx);
                 }
                 catch (IgniteCheckedException e) {
                     U.error(log, "Failed to unmarshal continuous routine handler, ignore routine [" +
                         "routineId=" + routineId +
                         ", srcNodeId=" + srcNodeId + ']', e);
 
-                    return;
+                    unregisterHandler(routineId, hnd, false);
                 }
-
-                try {
-                    registerHandler(srcNodeId,
-                        routineId,
-                        hnd,
-                        bufSize,
-                        interval,
-                        autoUnsubscribe,
-                        false);
-                }
-                catch (IgniteCheckedException e) {
-                    U.error(log, "Failed to register continuous routine handler, ignore routine [" +
-                        "routineId=" + routineId +
-                        ", srcNodeId=" + srcNodeId + ']', e);
-                }
-            }
-            else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Do not register continuous routine, rejected by node filter [" +
-                        "routineId=" + routineId +
-                        ", srcNodeId=" + srcNodeId + ']');
-                }
-            }
-        }));
+            }));
+        }
     }
 
     /**

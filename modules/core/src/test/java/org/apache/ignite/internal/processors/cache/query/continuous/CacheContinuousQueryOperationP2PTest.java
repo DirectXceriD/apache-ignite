@@ -20,6 +20,7 @@ package org.apache.ignite.internal.processors.cache.query.continuous;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.cache.configuration.Factory;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
@@ -35,6 +36,8 @@ import org.apache.ignite.cache.query.ContinuousQuery;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.spi.communication.CommunicationSpi;
+import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
@@ -69,10 +72,19 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
 
         ((TcpDiscoverySpi)cfg.getDiscoverySpi()).setIpFinder(ipFinder);
 
+        cfg.setCommunicationSpi(communicationSpi());
+
         cfg.setClientMode(client);
         cfg.setPeerClassLoadingEnabled(true);
 
         return cfg;
+    }
+
+    /**
+     * @return Communication SPI to use during a test.
+     */
+    protected CommunicationSpi communicationSpi() {
+        return new TcpCommunicationSpi();
     }
 
     /** {@inheritDoc} */
@@ -244,23 +256,44 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
 
         ignite(0).createCache(ccfg);
 
-        ThreadLocalRandom rnd = ThreadLocalRandom.current();
-
         final Class<Factory<CacheEntryEventFilter>> evtFilterFactoryCls =
             (Class<Factory<CacheEntryEventFilter>>)getExternalClassLoader().
                 loadClass("org.apache.ignite.tests.p2p.CacheDeploymentEntryEventFilterFactory");
+
+        testContinuousQuery(ccfg, isClient, false, evtFilterFactoryCls);
+        testContinuousQuery(ccfg, isClient, true, evtFilterFactoryCls);
+    }
+
+    /**
+     * @param ccfg Cache configuration.
+     * @param isClient Client.
+     * @param joinNode If a node should be added to topology after a query is started.
+     * @param evtFilterFactoryCls Remote filter factory class.
+     * @throws Exception If failed.
+     */
+    private void testContinuousQuery(CacheConfiguration<Object, Object> ccfg,
+        boolean isClient, boolean joinNode,
+        Class<Factory<CacheEntryEventFilter>> evtFilterFactoryCls) throws Exception {
+
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
         final CountDownLatch latch = new CountDownLatch(UPDATES);
 
         ContinuousQuery<Integer, Integer> qry = new ContinuousQuery<>();
 
+        AtomicReference<String> err = new AtomicReference<>();
+
         TestLocalListener locLsnr = new TestLocalListener() {
-            @Override public void onEvent(Iterable<CacheEntryEvent<? extends Integer, ? extends Integer>> evts)
-                throws CacheEntryListenerException {
+            @Override protected void onEvent(Iterable<CacheEntryEvent<? extends Integer, ? extends Integer>> evts) {
                 for (CacheEntryEvent<? extends Integer, ? extends Integer> evt : evts) {
                     latch.countDown();
 
                     log.info("Received event: " + evt);
+
+                    int key = evt.getKey();
+
+                    if (key % 2 == 0)
+                        err.set("Event received on entry, that doesn't pass a filter: " + key);
                 }
             }
         };
@@ -281,15 +314,14 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
 
         IgniteCache<Integer, Integer> cache;
 
-        if (isClient)
-            cache = grid(NODES - 1).cache(ccfg.getName());
-        else
-            cache = grid(rnd.nextInt(NODES - 1)).cache(ccfg.getName());
+        cache = isClient
+            ? grid(NODES - 1).cache(ccfg.getName())
+            : grid(rnd.nextInt(NODES - 1)).cache(ccfg.getName());
 
         try (QueryCursor<?> cur = cache.query(qry)) {
             cache.registerCacheEntryListener(lsnrCfg);
 
-            if (joinNode()) {
+            if (joinNode) {
                 startGrid(NODES);
                 awaitPartitionMapExchange();
             }
@@ -299,6 +331,8 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
 
             assertTrue("Failed to wait for local listener invocations: " + latch.getCount(),
                 latch.await(3, TimeUnit.SECONDS));
+
+            assertNull(err.get(), err.get());
         }
     }
 
@@ -322,13 +356,6 @@ public class CacheContinuousQueryOperationP2PTest extends GridCommonAbstractTest
             ccfg.setBackups(backups);
 
         return ccfg;
-    }
-
-    /**
-     * @return If {@code true}, then a new node will be started after registering listeners.
-     */
-    protected boolean joinNode() {
-        return false;
     }
 
     /**
