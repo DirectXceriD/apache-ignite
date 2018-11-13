@@ -81,7 +81,8 @@ panel-collapsible(ng-form=form on-open=`ui.loadPanel('${form}')`)
                             required,
                             tip: 'Dialect of SQL implemented by a particular RDBMS:',
                             genericDialectName: 'Generic JDBC dialect',
-                            placeholder: 'Choose JDBC dialect'
+                            placeholder: 'Choose JDBC dialect',
+                            change:`$ctrl.clearImplementationVersion(${pojoStoreFactory})`
                         })
                     .pc-form-grid-col-30
                         +form-field__number({

@@ -107,4 +107,7 @@ export default class CacheEditFormController {
         return this.IgniteConfirm.confirm('Are you sure you want to undo all changes for current cache?')
         .then(this.reset);
     }
+    clearImplementationVersion(storeFactory) {
+        delete storeFactory.implementationVersion;
+    }
 }
