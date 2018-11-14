@@ -38,8 +38,12 @@ export default class IgniteMavenGenerator {
         sb.append(`<${tag}>${val}</${tag}>`);
     }
 
-    addDependency(deps, groupId, artifactId, version, jar) {
-        deps.push({groupId, artifactId, version, jar});
+    addComment(sb, comment) {
+        sb.append(`<!-- ${comment} -->`);
+    }
+
+    addDependency(deps, groupId, artifactId, version, jar, link) {
+        deps.push({groupId, artifactId, version, jar, link});
     }
 
     pickDependency(acc, key, dfltVer, igniteVer, storedVer) {
@@ -52,8 +56,8 @@ export default class IgniteMavenGenerator {
             return _.isArray(version) ? _.find(version, (v) => versionService.since(igniteVer, v.range)).version : version;
         };
 
-        _.forEach(_.castArray(deps), ({groupId, artifactId, version, jar}) => {
-            this.addDependency(acc, groupId || 'org.apache.ignite', artifactId, storedVer || extractVersion(version) || dfltVer, jar);
+        _.forEach(_.castArray(deps), ({groupId, artifactId, version, jar, link}) => {
+            this.addDependency(acc, groupId || 'org.apache.ignite', artifactId, storedVer || extractVersion(version) || dfltVer, jar, link);
         });
     }
 
@@ -91,6 +95,9 @@ export default class IgniteMavenGenerator {
                 this.addProperty(sb, 'scope', 'system');
                 this.addProperty(sb, 'systemPath', '${project.basedir}/jdbc-drivers/' + dep.jar);
             }
+
+            if (dep.link)
+                this.addComment(sb, `Download last available driver by link: ${dep.link}`);
 
             sb.endBlock('</dependency>');
         });

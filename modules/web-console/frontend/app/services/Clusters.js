@@ -26,6 +26,12 @@ const uniqueNameValidator = (defaultName = '') => (a, items = []) => {
     return a && !items.some((b) => b._id !== a._id && (a.name || defaultName) === (b.name || defaultName));
 };
 
+const JDBC_LINKS = {
+    Oracle: 'https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html',
+    DB2: 'http://www-01.ibm.com/support/docview.wss?uid=swg21363866',
+    SQLServer: 'https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server?view=sql-server-2017'
+};
+
 export default class Clusters {
     static $inject = ['$http'];
 
@@ -235,16 +241,12 @@ export default class Clusters {
         };
     }
 
-    requiresProprietaryDrivers(cluster) {
-        return get(cluster, 'discovery.kind') === 'Jdbc' && ['Oracle', 'DB2', 'SQLServer'].includes(get(cluster, 'discovery.Jdbc.dialect'));
+    requiresProprietaryDrivers(dataSrc) {
+        return ['Oracle', 'DB2', 'SQLServer'].includes(get(dataSrc, 'dialect'));
     }
 
-    JDBCDriverURL(cluster) {
-        return ({
-            Oracle: 'http://www.oracle.com/technetwork/database/features/jdbc/default-2280470.html',
-            DB2: 'http://www-01.ibm.com/support/docview.wss?uid=swg21363866',
-            SQLServer: 'https://www.microsoft.com/en-us/download/details.aspx?id=11774'
-        })[get(cluster, 'discovery.Jdbc.dialect')];
+    JDBCDriverURL(dataSrc) {
+        return JDBC_LINKS[get(dataSrc, 'dialect')];
     }
 
     dataRegion = {

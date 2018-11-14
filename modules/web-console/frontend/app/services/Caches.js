@@ -15,8 +15,15 @@
  * limitations under the License.
  */
 
+import get from 'lodash/get';
 import ObjectID from 'bson-objectid';
 import omit from 'lodash/fp/omit';
+
+const JDBC_LINKS = {
+    Oracle: 'https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html',
+    DB2: 'http://www-01.ibm.com/support/docview.wss?uid=swg21363866',
+    SQLServer: 'https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server?view=sql-server-2017'
+};
 
 export default class Caches {
     static $inject = ['$http'];
@@ -235,5 +242,13 @@ export default class Caches {
      */
     shouldShowCacheBackupsCount(cache) {
         return cache && cache.cacheMode === 'PARTITIONED';
+    }
+
+    requiresProprietaryDrivers(storeFactory) {
+        return ['Oracle', 'DB2', 'SQLServer'].includes(get(storeFactory, 'dialect'));
+    }
+
+    JDBCDriverURL(storeFactory) {
+        return JDBC_LINKS[get(storeFactory, 'dialect')];
     }
 }
