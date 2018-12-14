@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.ml.preprocessing.encoding.stringencoder;
+package org.apache.ignite.ml.preprocessing.encoding.frequency;
 
 import java.util.Map;
 import java.util.Set;
@@ -37,11 +37,6 @@ import org.apache.ignite.ml.preprocessing.encoding.EncoderPreprocessor;
  * <p>
  * NOTE: it doesn’t add new column but change data in-place.
  * </p>
- * <p>
- * There is only a one strategy regarding how StringEncoder will handle unseen labels
- * when you have fit a StringEncoder on one dataset and then use it to transform another:
- * put unseen labels in a special additional bucket, at index is equal amountOfCategories.
- * </p>
  *
  * @param <K> Type of a key in {@code upstream} data.
  * @param <V> Type of a value in {@code upstream} data.
@@ -50,15 +45,19 @@ public class FrequencyEncoderPreprocessor<K, V> extends EncoderPreprocessor<K, V
     /** */
     protected static final long serialVersionUID = 6237711236382623488L;
 
+    /** Filling values. */
+    protected final Map<String, Double>[] encodingFrequencies;
+
     /**
-     * Constructs a new instance of String Encoder preprocessor.
+     * Constructs a new instance of Frequency Encoder preprocessor.
      *
      * @param basePreprocessor Base preprocessor.
      * @param handledIndices Handled indices.
      */
-    public FrequencyEncoderPreprocessor(Map<String, Integer>[] encodingValues,
+    public FrequencyEncoderPreprocessor(Map<String, Double>[] encodingFrequencies,
         IgniteBiFunction<K, V, Object[]> basePreprocessor, Set<Integer> handledIndices) {
-        super(encodingValues, basePreprocessor, handledIndices);
+        super(null, basePreprocessor, handledIndices);
+        this.encodingFrequencies = encodingFrequencies;
     }
 
     /**
@@ -75,10 +74,10 @@ public class FrequencyEncoderPreprocessor<K, V> extends EncoderPreprocessor<K, V
         for (int i = 0; i < res.length; i++) {
             Object tmpObj = tmp[i];
             if (handledIndices.contains(i)) {
-                if (tmpObj.equals(Double.NaN) && encodingValues[i].containsKey(KEY_FOR_NULL_VALUES))
+                if (tmpObj.equals(Double.NaN) && encodingFrequencies[i].containsKey(KEY_FOR_NULL_VALUES))
                     res[i] = encodingValues[i].get(KEY_FOR_NULL_VALUES);
-                else if (encodingValues[i].containsKey(tmpObj))
-                    res[i] = encodingValues[i].get(tmpObj);
+                else if (encodingFrequencies[i].containsKey(tmpObj))
+                    res[i] = encodingFrequencies[i].get(tmpObj);
                 else
                     throw new UnknownCategorialFeatureValue(tmpObj.toString());
             }
