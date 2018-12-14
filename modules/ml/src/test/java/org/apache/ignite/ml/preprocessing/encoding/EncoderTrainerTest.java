@@ -147,4 +147,34 @@ public class EncoderTrainerTest extends TrainerTest {
 
         assertArrayEquals(new double[] {2.0, 0.0}, preprocessor.apply(7, new String[] {"Monday", "September"}).asArray(), 1e-8);
     }
+
+    /** Tests {@code fit()} method. */
+    @Test
+    public void testFitOnStringCategorialFeaturesWithFrequencyEncoding() {
+        Map<Integer, String[]> data = new HashMap<>();
+        data.put(1, new String[] {"Monday", "September"});
+        data.put(2, new String[] {"Monday", "August"});
+        data.put(3, new String[] {"Monday", "August"});
+        data.put(4, new String[] {"Friday", "June"});
+        data.put(5, new String[] {"Friday", "June"});
+        data.put(6, new String[] {"Sunday", "August"});
+
+        DatasetBuilder<Integer, String[]> datasetBuilder = new LocalDatasetBuilder<>(data, parts);
+
+        EncoderTrainer<Integer, String[]> strEncoderTrainer = new EncoderTrainer<Integer, String[]>()
+            .withEncoderType(EncoderType.FREQUENCY_ENCODER)
+            .withEncodedFeature(0)
+            .withEncodedFeature(1);
+
+        EncoderPreprocessor<Integer, String[]> preprocessor = strEncoderTrainer.fit(
+            TestUtils.testEnvBuilder(),
+            datasetBuilder,
+            (k, v) -> v
+        );
+
+        assertArrayEquals(new double[] {0.5, 0.166}, preprocessor.apply(7, new String[] {"Monday", "September"}).asArray(), 0.1);
+        assertArrayEquals(new double[] {0.33, 0.5}, preprocessor.apply(7, new String[] {"Friday", "August"}).asArray(), 0.1);
+        assertArrayEquals(new double[] {0.166, 0.33}, preprocessor.apply(7, new String[] {"Sunday", "June"}).asArray(), 0.1);
+
+    }
 }
