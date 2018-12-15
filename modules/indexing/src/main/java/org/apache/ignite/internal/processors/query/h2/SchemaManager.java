@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -552,7 +553,13 @@ public class SchemaManager {
         // Create index.
         final GridH2IndexBase h2Idx = desc.createUserIndex(idxDesc);
 
-        h2Tbl.proposeUserIndex(h2Idx);
+        boolean idxExist = h2Tbl.proposeUserIndex(h2Idx);
+
+        if (idxExist) {
+            log.warning("Create index idx=\"" + h2Idx.getName() + "\" duplication, " +
+                "index with such column list: " + Arrays.toString(h2Idx.getIndexColumns()) + " already exist, " +
+                "possible performance drop.");
+        }
 
         try {
             // Populate index with existing cache data.

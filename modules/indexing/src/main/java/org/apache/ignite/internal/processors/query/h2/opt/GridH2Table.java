@@ -704,13 +704,57 @@ public class GridH2Table extends TableBase {
     }
 
     /**
+     * Check index presence, throw exception if index with same name already exist or return {@code True} if
+     * index with same fields and search direction found.
+     *
+     * @param curIdx Index to check.
+     * @return {@code True} if equal index exist.
+     * @throws IgniteCheckedException If failed.
+     */
+    private boolean checkIdxPresence(Index curIdx) throws IgniteCheckedException {
+        IndexColumn[] curColumns = curIdx.getIndexColumns();
+
+        for (Index idx : idxs) {
+            if (F.eq(curIdx.getName(), idx.getName()))
+                throw new IgniteCheckedException("Index already exists: " + idx.getName());
+
+            IndexColumn[] idxColumns = idx.getIndexColumns();
+
+            if (idxColumns.length == curColumns.length) {
+                boolean copy = true;
+
+                for (IndexColumn idxCol : idxColumns) {
+                    boolean occur = false;
+
+                    for (IndexColumn curCol : curColumns) {
+                        if (F.eq(idxCol.columnName, curCol.columnName) && idxCol.sortType == curCol.sortType)
+                            occur = true;
+                    }
+
+                    if (!occur) {
+                        copy = false;
+
+                        break;
+                    }
+                }
+
+                if (copy)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Add index that is in an intermediate state and is still being built, thus is not used in queries until it is
      * promoted.
      *
      * @param idx Index to add.
+     * @return {@code True} if equal index already exist.
      * @throws IgniteCheckedException If failed.
      */
-    public void proposeUserIndex(Index idx) throws IgniteCheckedException {
+    public boolean proposeUserIndex(Index idx) throws IgniteCheckedException {
         assert idx instanceof GridH2IndexBase;
 
         lock(true);
@@ -718,14 +762,13 @@ public class GridH2Table extends TableBase {
         try {
             ensureNotDestroyed();
 
-            for (Index oldIdx : idxs) {
-                if (F.eq(oldIdx.getName(), idx.getName()))
-                    throw new IgniteCheckedException("Index already exists: " + idx.getName());
-            }
+            boolean idxExist = checkIdxPresence(idx);
 
             Index oldTmpIdx = tmpIdxs.put(idx.getName(), (GridH2IndexBase)idx);
 
             assert oldTmpIdx == null;
+
+            return idxExist;
         }
         finally {
             unlock(true);

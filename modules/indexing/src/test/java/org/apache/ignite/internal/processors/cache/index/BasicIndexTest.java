@@ -31,6 +31,7 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.QueryEntity;
 import org.apache.ignite.cache.QueryIndex;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.DataRegionConfiguration;
 import org.apache.ignite.configuration.DataStorageConfiguration;
@@ -41,6 +42,8 @@ import org.apache.ignite.internal.processors.cache.persistence.file.FilePageStor
 import org.apache.ignite.internal.util.typedef.G;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.testframework.ListeningTestLogger;
+import org.apache.ignite.testframework.LogListener;
 import org.junit.Test;
 
 /**
@@ -59,6 +62,15 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
     /** */
     private int gridCount = 1;
 
+    /** */
+    private ListeningTestLogger srvLog;
+
+    /** */
+    private ListeningTestLogger clntLog;
+
+    /** */
+    private static final String CLIENT_NAME = "client";
+
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String igniteInstanceName) throws Exception {
         assertNotNull(inlineSize);
@@ -69,6 +81,15 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
         IgniteConfiguration igniteCfg = super.getConfiguration(igniteInstanceName);
 
         igniteCfg.setConsistentId(igniteInstanceName);
+
+        if (igniteInstanceName.startsWith(CLIENT_NAME)) {
+            igniteCfg.setClientMode(true);
+            if (clntLog != null)
+                igniteCfg.setGridLogger(clntLog);
+        } else {
+            if (srvLog != null)
+                igniteCfg.setGridLogger(srvLog);
+        }
 
         LinkedHashMap<String, String> fields = new LinkedHashMap<>();
         fields.put("keyStr", String.class.getName());
@@ -120,6 +141,8 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
         stopAllGrids();
 
         cleanPersistenceDir();
+
+        srvLog = clntLog = null;
 
         super.afterTest();
     }
@@ -207,6 +230,93 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
 
             stopAllGrids();
         }
+    }
+
+    /**
+     * Test dynamic indexes creation with equal fields.
+     *
+     * @throws Exception If failed.
+     */
+    @Test
+    public void testEqualFieldsDynamicIndexesNoPersistence() throws Exception {
+        runEqualFieldsDynamicIndexesNoPersistence(false);
+    }
+
+    /**
+     * Test dynamic indexes creation with equal fields.
+     *
+     * @throws Exception If failed.
+     */
+    @Test
+    public void testEqualFieldsDynamicIndexesWithPersistence() throws Exception {
+        runEqualFieldsDynamicIndexesNoPersistence(true);
+    }
+
+    /** */
+    private void runEqualFieldsDynamicIndexesNoPersistence(boolean persistEnabled) throws Exception {
+        isPersistenceEnabled = persistEnabled;
+
+        indexes = Collections.singletonList(new QueryIndex("keyLong"));
+
+        inlineSize = 10;
+
+        srvLog = clntLog = new ListeningTestLogger(false, log);
+
+        String msg1 = "duplication, index with such column list:";
+
+        LogListener lsnr = LogListener.matches(msg1).times(2).build();
+
+        srvLog.registerListener(lsnr);
+
+        IgniteEx ig0 = startGrid(0);
+
+        if (persistEnabled)
+            ig0.cluster().active(true);
+
+        IgniteCache<Key, Val> cache = grid(0).cache(DEFAULT_CACHE_NAME);
+
+        populateCache();
+
+        cache.query(new SqlFieldsQuery("create index \"idx1\" on Val(keyStr, keyLong)"));
+
+        cache.query(new SqlFieldsQuery("create index \"idx2\" on Val(keyStr desc, keyLong)"));
+
+        assertFalse(lsnr.check());
+
+        cache.query(new SqlFieldsQuery("create index \"idx3\" on Val(keyStr, keyLong)"));
+
+        cache.query(new SqlFieldsQuery("create index \"idx4\" on Val(keyLong)"));
+
+        cache.indexReadyFuture().get();
+
+        assertTrue(lsnr.check());
+
+        srvLog.clearListeners();
+
+        clntLog.registerListener(lsnr);
+
+        IgniteEx ig = startGrid(CLIENT_NAME);
+
+        cache = ig.cache(DEFAULT_CACHE_NAME);
+
+        cache.query(new SqlFieldsQuery("create index \"idx5\" on Val(keyStr desc, keyLong)"));
+
+        cache.indexReadyFuture().get();
+
+        assertTrue(lsnr.check());
+
+        srvLog.clearListeners();
+        clntLog.clearListeners();
+
+        cache.query(new SqlFieldsQuery("create index \"idx6\" on Val(keyStr)"));
+
+        cache.indexReadyFuture().get();
+
+        assertTrue(lsnr.check());
+
+        stopAllGrids();
+
+        cleanPersistenceDir();
     }
 
     /** */
@@ -723,6 +833,7 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
     /** */
     private static class Key {
         /** */
+        @QuerySqlField(index = true)
         private String keyStr;
 
         /** */
