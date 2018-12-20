@@ -150,7 +150,7 @@ public abstract class GridNearTxAbstractEnlistFuture<T> extends GridCacheCompoun
         else if (timeout > 0)
             timeoutObj = new LockTimeoutObject();
 
-        while(true) {
+        while (true) {
             IgniteInternalFuture<?> fut = tx.lockFuture();
 
             if (fut == GridDhtTxLocalAdapter.ROLLBACK_FUT) {
@@ -223,7 +223,18 @@ public abstract class GridNearTxAbstractEnlistFuture<T> extends GridCacheCompoun
         if (topVer != null) {
             for (GridDhtTopologyFuture fut : cctx.shared().exchange().exchangeFutures()) {
                 if (fut.exchangeDone() && fut.topologyVersion().equals(topVer)) {
-                    Throwable err = fut.validateCache(cctx, false, false, null, null);
+                    Throwable err = null;
+
+                    // Before cache validation, make sure that this topology future is already completed.
+                    try {
+                        fut.get();
+                    }
+                    catch (IgniteCheckedException e) {
+                        err = fut.error();
+                    }
+
+                    if (err == null)
+                        err = fut.validateCache(cctx, false, false, null, null);
 
                     if (err != null) {
                         onDone(err);
@@ -345,7 +356,7 @@ public abstract class GridNearTxAbstractEnlistFuture<T> extends GridCacheCompoun
             }
         }
         finally {
-            if(cctx.topology().holdsLock())
+            if (cctx.topology().holdsLock())
                 cctx.topology().readUnlock();
         }
     }
