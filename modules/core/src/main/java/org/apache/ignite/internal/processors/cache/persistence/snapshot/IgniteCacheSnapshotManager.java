@@ -120,20 +120,6 @@ public class IgniteCacheSnapshotManager<T extends SnapshotOperation> extends Gri
     }
 
     /**
-     * @param fullId Full page id.
-     * @param tmpWriteBuf buffer
-     * @param writtenPages Overall pages written, negative value means there is no progress tracked
-     * @param totalPages Overall pages count to be written, should be positive
-     */
-    public void onPageWrite(
-        final FullPageId fullId,
-        final ByteBuffer tmpWriteBuf,
-        final int writtenPages,
-        final int totalPages) {
-        // No-op.
-    }
-
-    /**
      * @param cctx Cctx.
      */
     public void onCacheStop(GridCacheContext cctx) {
@@ -154,17 +140,6 @@ public class IgniteCacheSnapshotManager<T extends SnapshotOperation> extends Gri
         Long page,
         FullPageId fullId,
         PageMemory pageMem
-    ) throws IgniteCheckedException {
-        // No-op.
-    }
-
-    /**
-     *
-     */
-    public void flushDirtyPageHandler(
-        FullPageId fullId,
-        ByteBuffer pageBuf,
-        Integer tag
     ) throws IgniteCheckedException {
         // No-op.
     }
