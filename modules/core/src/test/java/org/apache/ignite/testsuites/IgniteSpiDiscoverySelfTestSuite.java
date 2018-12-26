@@ -28,6 +28,7 @@ import org.apache.ignite.spi.discovery.LongClientConnectToClusterTest;
 import org.apache.ignite.spi.discovery.tcp.DiscoveryUnmarshalVulnerabilityTest;
 import org.apache.ignite.spi.discovery.tcp.IgniteClientConnectTest;
 import org.apache.ignite.spi.discovery.tcp.IgniteClientReconnectMassiveShutdownTest;
+import org.apache.ignite.spi.discovery.tcp.IgniteMetricsOverflowTest;
 import org.apache.ignite.spi.discovery.tcp.TcpClientDiscoveryMarshallerCheckSelfTest;
 import org.apache.ignite.spi.discovery.tcp.TcpClientDiscoverySpiCoordinatorChangeTest;
 import org.apache.ignite.spi.discovery.tcp.TcpClientDiscoverySpiFailureTimeoutSelfTest;
@@ -128,6 +129,8 @@ public class IgniteSpiDiscoverySelfTestSuite {
         suite.addTest(new JUnit4TestAdapter(TcpDiscoverySpiReconnectDelayTest.class));
 
         suite.addTest(new JUnit4TestAdapter(IgniteDiscoveryMassiveNodeFailTest.class));
+
+        suite.addTest(new JUnit4TestAdapter(IgniteMetricsOverflowTest.class));
 
         // Client connect.
         suite.addTest(new JUnit4TestAdapter(IgniteClientConnectTest.class));
