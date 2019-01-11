@@ -33,7 +33,7 @@ export default function SummaryZipperService($q) {
         };
 
         worker.onerror = (err) => {
-            defer.reject(err);
+            defer.reject(new Error(err.message));
             worker.terminate();
         };
 

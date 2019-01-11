@@ -32,10 +32,10 @@ export default class {
         prefix = prefix || '';
 
         if (err) {
-            if ('data' in err)
+            if (err.hasOwnProperty('data'))
                 err = err.data;
 
-            if ('message' in err) {
+            if (err.hasOwnProperty('message')) {
                 let msg = err.message;
 
                 const traceIndex = msg.indexOf(', trace=');
