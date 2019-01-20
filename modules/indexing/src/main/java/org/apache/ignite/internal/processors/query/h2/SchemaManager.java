@@ -553,13 +553,7 @@ public class SchemaManager {
         // Create index.
         final GridH2IndexBase h2Idx = desc.createUserIndex(idxDesc);
 
-        boolean idxExist = h2Tbl.proposeUserIndex(h2Idx);
-
-        if (idxExist) {
-            log.warning("Create index idx=\"" + h2Idx.getName() + "\" duplication, " +
-                "index with such column list: " + Arrays.toString(h2Idx.getIndexColumns()) + " already exist, " +
-                "possible performance drop.");
-        }
+        h2Tbl.proposeUserIndex(h2Idx);
 
         try {
             // Populate index with existing cache data.

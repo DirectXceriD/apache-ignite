@@ -260,18 +260,32 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
 
         inlineSize = 10;
 
-        srvLog = clntLog = new ListeningTestLogger(false, log);
+        srvLog = new ListeningTestLogger(false, log);
 
-        String msg1 = "duplication, index with such column list:";
+        clntLog = new ListeningTestLogger(false, log);
+
+        String msg1 = "duplication, index";
 
         LogListener lsnr = LogListener.matches(msg1).times(2).build();
 
+        LogListener staticCachesLsnr = LogListener.matches(msg1).build();
+
         srvLog.registerListener(lsnr);
+
+        srvLog.registerListener(staticCachesLsnr);
 
         IgniteEx ig0 = startGrid(0);
 
+        startGrid(1);
+
         if (persistEnabled)
             ig0.cluster().active(true);
+
+        assertFalse(staticCachesLsnr.check());
+
+        clntLog.unregisterListener(staticCachesLsnr);
+
+        stopGrid(1);
 
         IgniteCache<Key, Val> cache = grid(0).cache(DEFAULT_CACHE_NAME);
 
@@ -291,28 +305,38 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
 
         assertTrue(lsnr.check());
 
-        srvLog.clearListeners();
+        srvLog.unregisterListener(lsnr);
 
         clntLog.registerListener(lsnr);
 
         IgniteEx ig = startGrid(CLIENT_NAME);
 
+        assertTrue(lsnr.check());
+
         cache = ig.cache(DEFAULT_CACHE_NAME);
+
+        LogListener lsnrIdx5 = LogListener.matches(msg1).andMatches("idx5").build();
+
+        clntLog.registerListener(lsnrIdx5);
 
         cache.query(new SqlFieldsQuery("create index \"idx5\" on Val(keyStr desc, keyLong)"));
 
         cache.indexReadyFuture().get();
 
-        assertTrue(lsnr.check());
+        assertTrue(lsnrIdx5.check());
 
         srvLog.clearListeners();
         clntLog.clearListeners();
+
+        LogListener lsnrIdx6 = LogListener.matches(msg1).andMatches("idx6").build();
+
+        clntLog.registerListener(lsnrIdx6);
 
         cache.query(new SqlFieldsQuery("create index \"idx6\" on Val(keyStr)"));
 
         cache.indexReadyFuture().get();
 
-        assertTrue(lsnr.check());
+        assertTrue(lsnrIdx6.check());
 
         stopAllGrids();
 

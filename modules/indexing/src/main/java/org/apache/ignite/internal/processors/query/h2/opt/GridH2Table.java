@@ -27,8 +27,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteInterruptedException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheContextInfo;
 import org.apache.ignite.internal.processors.cache.persistence.CacheDataRow;
@@ -41,7 +46,9 @@ import org.apache.ignite.internal.processors.query.h2.IndexRebuildPartialClosure
 import org.apache.ignite.internal.processors.query.h2.database.H2TreeIndex;
 import org.apache.ignite.internal.processors.query.h2.database.H2TreeIndexBase;
 import org.apache.ignite.internal.processors.query.h2.twostep.GridMapQueryExecutor;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.logger.NullLogger;
 import org.h2.command.ddl.CreateTableData;
 import org.h2.command.dml.Insert;
 import org.h2.engine.DbObject;
@@ -121,6 +128,10 @@ public class GridH2Table extends TableBase {
     /** Columns with thread-safe access. */
     private volatile Column[] safeColumns;
 
+    /** Logger. */
+    @GridToStringExclude
+    private final IgniteLogger log;
+
     /**
      * Creates table.
      *
@@ -179,6 +190,14 @@ public class GridH2Table extends TableBase {
         sysIdxsCnt = idxs.size();
 
         lock = new ReentrantReadWriteLock();
+
+        if (desc != null && desc.context() != null) {
+            GridKernalContext ctx = desc.context().kernalContext();
+
+            log = ctx.log(getClass());
+        }
+        else
+            log = new NullLogger();
     }
 
     /**
@@ -711,8 +730,10 @@ public class GridH2Table extends TableBase {
      * @return {@code True} if equal index exist.
      * @throws IgniteCheckedException If failed.
      */
-    private boolean checkIdxPresence(Index curIdx) throws IgniteCheckedException {
+    private @Nullable Index checkIdxPresence(Index curIdx) throws IgniteCheckedException {
         IndexColumn[] curColumns = curIdx.getIndexColumns();
+
+        Index registredIdx = null;
 
         for (Index idx : idxs) {
             if (F.eq(curIdx.getName(), idx.getName()))
@@ -724,14 +745,14 @@ public class GridH2Table extends TableBase {
                 boolean copy = true;
 
                 for (IndexColumn idxCol : idxColumns) {
-                    boolean occur = false;
+                    registredIdx = null;
 
                     for (IndexColumn curCol : curColumns) {
                         if (F.eq(idxCol.columnName, curCol.columnName) && idxCol.sortType == curCol.sortType)
-                            occur = true;
+                            registredIdx = idx;
                     }
 
-                    if (!occur) {
+                    if (registredIdx == null) {
                         copy = false;
 
                         break;
@@ -739,11 +760,11 @@ public class GridH2Table extends TableBase {
                 }
 
                 if (copy)
-                    return true;
+                    return registredIdx;
             }
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -751,10 +772,9 @@ public class GridH2Table extends TableBase {
      * promoted.
      *
      * @param idx Index to add.
-     * @return {@code True} if equal index already exist.
      * @throws IgniteCheckedException If failed.
      */
-    public boolean proposeUserIndex(Index idx) throws IgniteCheckedException {
+    public void proposeUserIndex(Index idx) throws IgniteCheckedException {
         assert idx instanceof GridH2IndexBase;
 
         lock(true);
@@ -762,13 +782,19 @@ public class GridH2Table extends TableBase {
         try {
             ensureNotDestroyed();
 
-            boolean idxExist = checkIdxPresence(idx);
+            Index idxExist = checkIdxPresence(idx);
+
+            if (idxExist != null) {
+                String idxCols = Stream.of(idx.getIndexColumns()).map(k -> k.columnName).collect(Collectors.joining(", "));
+
+                log.warning("Create index idx=\"" + idx.getName() + "\" duplication, " +
+                    "index=\"" + idxExist.getName() + "\" with such column list: [" + idxCols + "]" +
+                    ", schema=\"" + getSchema().getName() + "\", table=\"" + getName() + "\", already exist, possible performance drop.");
+            }
 
             Index oldTmpIdx = tmpIdxs.put(idx.getName(), (GridH2IndexBase)idx);
 
             assert oldTmpIdx == null;
-
-            return idxExist;
         }
         finally {
             unlock(true);
