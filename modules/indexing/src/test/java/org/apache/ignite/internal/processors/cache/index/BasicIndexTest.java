@@ -336,7 +336,7 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
 
         cache.indexReadyFuture().get();
 
-        assertTrue(lsnrIdx6.check());
+        assertFalse(lsnrIdx6.check());
 
         stopAllGrids();
 
