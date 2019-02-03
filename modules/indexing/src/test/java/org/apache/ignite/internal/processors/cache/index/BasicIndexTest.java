@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.QueryEntity;
 import org.apache.ignite.cache.QueryIndex;
+import org.apache.ignite.cache.query.FieldsQueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.apache.ignite.configuration.CacheConfiguration;
@@ -39,6 +40,7 @@ import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.IgniteInternalCache;
 import org.apache.ignite.internal.processors.cache.persistence.file.FilePageStoreManager;
+import org.apache.ignite.internal.processors.query.QueryUtils;
 import org.apache.ignite.internal.util.typedef.G;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -107,8 +109,10 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
                     .setFields(fields)
                     .setKeyFields(new HashSet<>(Arrays.asList("keyStr", "keyLong", "keyPojo")))
                     .setIndexes(indexes)
+                    .setAliases(Collections.singletonMap("_KEY", "pk_id"))
             ))
-            .setSqlIndexMaxInlineSize(inlineSize);
+            .setSqlIndexMaxInlineSize(inlineSize)
+            /*.setIndexedTypes(Key.class, Val.class)*/;
 
         igniteCfg.setCacheConfiguration(ccfg);
 
@@ -264,7 +268,7 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
 
         clntLog = new ListeningTestLogger(false, log);
 
-        String msg1 = "duplication, index";
+        String msg1 = "Index with the given set of columns already exists";
 
         LogListener lsnr = LogListener.matches(msg1).times(2).build();
 
@@ -290,6 +294,9 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
         IgniteCache<Key, Val> cache = grid(0).cache(DEFAULT_CACHE_NAME);
 
         populateCache();
+
+        cache.query(new SqlFieldsQuery("create index \"idx0\" on Val(keyLong)"));
+/*        cache.query(new SqlFieldsQuery("create index \"idx0\" on Val(keyStr)"));
 
         cache.query(new SqlFieldsQuery("create index \"idx1\" on Val(keyStr, keyLong)"));
 
@@ -326,17 +333,17 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
         assertTrue(lsnrIdx5.check());
 
         srvLog.clearListeners();
-        clntLog.clearListeners();
+        clntLog.clearListeners();*/
 
         LogListener lsnrIdx6 = LogListener.matches(msg1).andMatches("idx6").build();
 
-        clntLog.registerListener(lsnrIdx6);
+        srvLog.registerListener(lsnrIdx6);
 
-        cache.query(new SqlFieldsQuery("create index \"idx6\" on Val(keyStr)"));
+        cache.query(new SqlFieldsQuery("create index \"idx6\" on Val(keyLong)"));
 
         cache.indexReadyFuture().get();
 
-        assertFalse(lsnrIdx6.check());
+        assertTrue(lsnrIdx6.check());
 
         stopAllGrids();
 
@@ -857,7 +864,6 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
     /** */
     private static class Key {
         /** */
-        @QuerySqlField(index = true)
         private String keyStr;
 
         /** */
@@ -908,6 +914,7 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
     /** */
     private static class Val {
         /** */
+        @QuerySqlField(index = true)
         private String valStr;
 
         /** */
