@@ -48,7 +48,7 @@ import org.apache.ignite.internal.processors.query.h2.database.H2TreeIndexBase;
 import org.apache.ignite.internal.processors.query.h2.twostep.GridMapQueryExecutor;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.F;
-import org.apache.ignite.logger.NullLogger;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.h2.command.ddl.CreateTableData;
 import org.h2.command.dml.Insert;
 import org.h2.engine.DbObject;
@@ -130,7 +130,7 @@ public class GridH2Table extends TableBase {
 
     /** Logger. */
     @GridToStringExclude
-    private final IgniteLogger log;
+    private IgniteLogger log;
 
     /**
      * Creates table.
@@ -196,8 +196,8 @@ public class GridH2Table extends TableBase {
 
             log = ctx.log(getClass());
         }
-        else
-            log = new NullLogger();
+
+        assert log != null;
     }
 
     /**
@@ -723,6 +723,20 @@ public class GridH2Table extends TableBase {
     }
 
     /**
+     * Checks and replace if provided column id matches value alias column.
+     *
+     * @param col Input column.
+     * @return Transformed result if needed.
+     */
+    private String aliasNameTransformer(IndexColumn col) {
+        if (desc.isKeyAliasColumn(col.column.getColumnId()))
+            return QueryUtils.KEY_FIELD_NAME;
+        else if (desc.isValueAliasColumn(col.column.getColumnId()))
+            return QueryUtils.VAL_FIELD_NAME;
+        return col.columnName;
+    }
+
+    /**
      * Check index presence, throw exception if index with same name already exist or return {@code True} if
      * index with same fields and search direction found.
      *
@@ -730,12 +744,15 @@ public class GridH2Table extends TableBase {
      * @return {@code True} if equal index exist.
      * @throws IgniteCheckedException If failed.
      */
-    private @Nullable Index checkIdxPresence(Index curIdx) throws IgniteCheckedException {
+    private @Nullable Index checkIndexPresence(Index curIdx) throws IgniteCheckedException {
         IndexColumn[] curColumns = curIdx.getIndexColumns();
 
         Index registredIdx = null;
 
         for (Index idx : idxs) {
+            if (!(idx instanceof H2TreeIndex))
+                continue;
+
             if (F.eq(curIdx.getName(), idx.getName()))
                 throw new IgniteCheckedException("Index already exists: " + idx.getName());
 
@@ -748,7 +765,8 @@ public class GridH2Table extends TableBase {
                     registredIdx = null;
 
                     for (IndexColumn curCol : curColumns) {
-                        if (F.eq(idxCol.columnName, curCol.columnName) && idxCol.sortType == curCol.sortType)
+                        if (F.eq(aliasNameTransformer(idxCol), aliasNameTransformer(curCol))
+                            && idxCol.sortType == curCol.sortType)
                             registredIdx = idx;
                     }
 
@@ -782,14 +800,16 @@ public class GridH2Table extends TableBase {
         try {
             ensureNotDestroyed();
 
-            Index idxExist = checkIdxPresence(idx);
+            Index idxExist = checkIndexPresence(idx);
 
             if (idxExist != null) {
-                String idxCols = Stream.of(idx.getIndexColumns()).map(k -> k.columnName).collect(Collectors.joining(", "));
+                String idxCols = Stream.of(idx.getIndexColumns())
+                    .map(k -> k.columnName).collect(Collectors.joining(", "));
 
-                log.warning("Create index idx=\"" + idx.getName() + "\" duplication, " +
-                    "index=\"" + idxExist.getName() + "\" with such column list: [" + idxCols + "]" +
-                    ", schema=\"" + getSchema().getName() + "\", table=\"" + getName() + "\", already exist, possible performance drop.");
+                U.warn(log, "Index with the given set of columns already exists (consider dropping either new" +
+                    " or existing index) [cacheName=" + cacheInfo.name() + ", schemaName=" + getSchema().getName() +
+                    ", tableName=" + getName() + ", newIndexName=" + idx.getName() + ", existingIndexName=" +
+                    idxExist.getName() + "]");
             }
 
             Index oldTmpIdx = tmpIdxs.put(idx.getName(), (GridH2IndexBase)idx);
