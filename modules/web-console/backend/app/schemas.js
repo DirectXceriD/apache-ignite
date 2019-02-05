@@ -373,9 +373,57 @@ module.exports.factory = function(mongoose) {
         trashPurgeTimeout: Number,
         secondaryFileSystemEnabled: Boolean,
         secondaryFileSystem: {
+            userName: String,
+            kind: {type: String, enum: ['Caching', 'Kerberos', 'Custom'], default: 'Caching'},
             uri: String,
             cfgPath: String,
-            userName: String
+            cfgPaths: [String],
+            userNameMapper: {
+                kind: {type: String, enum: ['Chained', 'Basic', 'Kerberos', 'Custom']},
+                Chained: {
+                    mappers: [{
+                        kind: {type: String, enum: ['Basic', 'Kerberos', 'Custom']},
+                        Basic: {
+                            defaultUserName: String,
+                            useDefaultUserName: Boolean,
+                            mappings: [{
+                                name: String,
+                                value: String
+                            }]
+                        },
+                        Kerberos: {
+                            instance: String,
+                            realm: String
+                        },
+                        Custom: {
+                            className: String,
+                        }
+                    }]
+                },
+                Basic: {
+                    defaultUserName: String,
+                    useDefaultUserName: Boolean,
+                    mappings: [{
+                        name: String,
+                        value: String
+                    }]
+                },
+                Kerberos: {
+                    instance: String,
+                    realm: String
+                },
+                Custom: {
+                    className: String,
+                }
+            },
+            Kerberos: {
+                keyTab: String,
+                keyTabPrincipal: String,
+                reloginInterval: Number
+            },
+            Custom: {
+                className: String
+            }
         },
         colocateMetadata: Boolean,
         relaxedConsistency: Boolean,

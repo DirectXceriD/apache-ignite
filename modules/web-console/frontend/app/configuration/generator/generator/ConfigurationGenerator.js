@@ -2439,6 +2439,45 @@ export default class IgniteConfigurationGenerator {
         return cfg;
     }
 
+    static _userNameMapperBean(mapper) {
+        let bean = null;
+
+        switch (mapper.kind) {
+            case 'Chained':
+                bean = new Bean('org.apache.ignite.hadoop.util.ChainedUserNameMapper', 'mameMapper', mapper.Chained);
+
+                bean.arrayProperty('mappers', 'mappers', _.map(mapper.Chained.mappers, IgniteConfigurationGenerator._userNameMapperBean), 'org.apache.ignite.hadoop.util.UserNameMapper');
+
+                break;
+
+            case 'Basic':
+                bean = new Bean('org.apache.ignite.hadoop.util.BasicUserNameMapper', 'mameMapper', mapper.Basic, igfsDflts.secondaryFileSystem.userNameMapper.Basic);
+
+                bean.stringProperty('defaultUserName')
+                    .boolProperty('useDefaultUserName')
+                    .mapProperty('mappings', 'mappings');
+
+                break;
+
+            case 'Kerberos':
+                bean = new Bean('org.apache.ignite.hadoop.util.KerberosUserNameMapper', 'nameMapper', mapper.Kerberos);
+
+                bean.stringProperty('instance')
+                    .stringProperty('realm');
+
+                break;
+
+            case 'Custom':
+                bean = new Bean(mapper.Custom.className);
+
+                break;
+
+            default:
+        }
+
+        return bean;
+    }
+
     // Generate IGFS secondary file system group.
     static igfsSecondFS(igfs, cfg = this.igfsConfigurationBean(igfs)) {
         if (igfs.secondaryFileSystemEnabled) {
@@ -2449,11 +2488,40 @@ export default class IgniteConfigurationGenerator {
 
             bean.stringProperty('userName', 'defaultUserName');
 
-            const factoryBean = new Bean('org.apache.ignite.hadoop.fs.CachingHadoopFileSystemFactory',
-                'fac', secondFs);
+            let factoryBean = null;
 
-            factoryBean.stringProperty('uri')
-                .pathProperty('cfgPath', 'configPaths');
+            switch (secondFs.kind || 'Caching') {
+                case 'Caching':
+                    factoryBean = new Bean('org.apache.ignite.hadoop.fs.CachingHadoopFileSystemFactory', 'fac', secondFs);
+                    break;
+
+                case 'Kerberos':
+                    factoryBean = new Bean('org.apache.ignite.hadoop.fs.KerberosHadoopFileSystemFactory', 'fac', secondFs, igfsDflts.secondaryFileSystem);
+                    break;
+
+                case 'Custom':
+                    factoryBean = new Bean(secondFs.Custom.className, 'fac', null);
+                    break;
+
+                default:
+            }
+
+            if (!factoryBean)
+                return cfg;
+
+            if (secondFs.kind !== 'Custom') {
+                factoryBean.stringProperty('uri')
+                    .pathArrayProperty('cfgPaths', 'configPaths', secondFs.cfgPaths, true);
+
+                if (secondFs.kind === 'Kerberos') {
+                    factoryBean.stringProperty('Kerberos.keyTab', 'keyTab')
+                        .stringProperty('Kerberos.keyTabPrincipal', 'keyTabPrincipal')
+                        .longProperty('Kerberos.reloginInterval', 'reloginInterval');
+                }
+
+                if (_.get(secondFs, 'userNameMapper.kind'))
+                    factoryBean.beanProperty('userNameMapper', IgniteConfigurationGenerator._userNameMapperBean(secondFs.userNameMapper));
+            }
 
             bean.beanProperty('fileSystemFactory', factoryBean);
 

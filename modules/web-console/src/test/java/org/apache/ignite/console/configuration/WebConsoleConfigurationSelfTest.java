@@ -54,7 +54,11 @@ import org.apache.ignite.configuration.SqlConnectorConfiguration;
 import org.apache.ignite.configuration.TransactionConfiguration;
 import org.apache.ignite.hadoop.fs.CachingHadoopFileSystemFactory;
 import org.apache.ignite.hadoop.fs.IgniteHadoopIgfsSecondaryFileSystem;
+import org.apache.ignite.hadoop.fs.KerberosHadoopFileSystemFactory;
 import org.apache.ignite.hadoop.mapreduce.IgniteHadoopWeightedMapReducePlanner;
+import org.apache.ignite.hadoop.util.BasicUserNameMapper;
+import org.apache.ignite.hadoop.util.ChainedUserNameMapper;
+import org.apache.ignite.hadoop.util.KerberosUserNameMapper;
 import org.apache.ignite.igfs.IgfsGroupDataBlocksKeyMapper;
 import org.apache.ignite.igfs.IgfsIpcEndpointConfiguration;
 import org.apache.ignite.internal.marshaller.optimized.OptimizedMarshaller;
@@ -814,8 +818,37 @@ public class WebConsoleConfigurationSelfTest {
         Set<String> cachingIgfsCfgProps = new HashSet<>();
         cachingIgfsCfgProps.add("uri");
         cachingIgfsCfgProps.add("configPaths");
+        cachingIgfsCfgProps.add("userNameMapper");
 
         metadata.put(CachingHadoopFileSystemFactory.class, new MetadataInfo(cachingIgfsCfgProps, EMPTY_FIELDS, EMPTY_FIELDS));
+
+        Set<String> kerberosIgfsCfgProps = new HashSet<>();
+        kerberosIgfsCfgProps.add("uri");
+        kerberosIgfsCfgProps.add("configPaths");
+        kerberosIgfsCfgProps.add("userNameMapper");
+        kerberosIgfsCfgProps.add("keyTab");
+        kerberosIgfsCfgProps.add("keyTabPrincipal");
+        kerberosIgfsCfgProps.add("reloginInterval");
+
+        metadata.put(KerberosHadoopFileSystemFactory.class, new MetadataInfo(kerberosIgfsCfgProps, EMPTY_FIELDS, EMPTY_FIELDS));
+
+        Set<String> chainedIgfsUsrNameMapperProps = new HashSet<>();
+        chainedIgfsUsrNameMapperProps.add("mappers");
+
+        metadata.put(ChainedUserNameMapper.class, new MetadataInfo(chainedIgfsUsrNameMapperProps, EMPTY_FIELDS, EMPTY_FIELDS));
+
+        Set<String> basicIgfsUsrNameMapperProps = new HashSet<>();
+        basicIgfsUsrNameMapperProps.add("defaultUserName");
+        basicIgfsUsrNameMapperProps.add("useDefaultUserName");
+        basicIgfsUsrNameMapperProps.add("mappings");
+
+        metadata.put(BasicUserNameMapper.class, new MetadataInfo(basicIgfsUsrNameMapperProps, EMPTY_FIELDS, EMPTY_FIELDS));
+
+        Set<String> kerberosIgfsUsrNameMapperProps = new HashSet<>();
+        kerberosIgfsUsrNameMapperProps.add("instance");
+        kerberosIgfsUsrNameMapperProps.add("realm");
+
+        metadata.put(KerberosUserNameMapper.class, new MetadataInfo(kerberosIgfsUsrNameMapperProps, EMPTY_FIELDS, EMPTY_FIELDS));
 
         Set<String> ipcEndpointProps = new HashSet<>();
         ipcEndpointProps.add("type");
