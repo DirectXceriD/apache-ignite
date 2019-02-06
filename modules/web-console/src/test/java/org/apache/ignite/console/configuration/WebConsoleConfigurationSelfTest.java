@@ -622,6 +622,8 @@ public class WebConsoleConfigurationSelfTest {
         // Only on code generation.
         sslCfgProps.add("trustStorePassword");
         sslCfgProps.add("trustStoreType");
+        sslCfgProps.add("cipherSuites");
+        sslCfgProps.add("protocols");
         metadata.put(SslContextFactory.class, new MetadataInfo(sslCfgProps, EMPTY_FIELDS, EMPTY_FIELDS));
 
         Set<String> executorProps = new HashSet<>();

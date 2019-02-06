@@ -757,7 +757,9 @@ module.exports.factory = function(mongoose) {
             protocol: String,
             trustStoreFilePath: String,
             trustStoreType: String,
-            trustManagers: [String]
+            trustManagers: [String],
+            cipherSuites: [String],
+            protocols: [String]
         },
         rebalanceThreadPoolSize: Number,
         odbc: {

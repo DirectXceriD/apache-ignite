@@ -118,7 +118,7 @@ export default class IgniteConfigurationGenerator {
             this.clusterQuery(cluster, available, cfg);
 
         this.clusterServiceConfiguration(cluster.serviceConfigurations, cluster.caches, cfg);
-        this.clusterSsl(cluster, cfg);
+        this.clusterSsl(cluster, available, cfg);
 
         // Deprecated in ignite 2.0
         if (available(['1.0.0', '2.0.0']))
@@ -1730,7 +1730,7 @@ export default class IgniteConfigurationGenerator {
     }
 
     // Java code generator for cluster's SSL configuration.
-    static clusterSsl(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+    static clusterSsl(cluster, available, cfg = this.igniteConfigurationBean(cluster)) {
         if (cluster.sslEnabled && nonNil(cluster.sslContextFactory)) {
             const bean = new Bean('org.apache.ignite.ssl.SslContextFactory', 'sslCtxFactory',
                 cluster.sslContextFactory);
@@ -1756,6 +1756,11 @@ export default class IgniteConfigurationGenerator {
                     bean.propertyChar('trustStorePassword', 'ssl.trust.storage.password', 'YOUR_SSL_TRUST_STORAGE_PASSWORD');
 
                 bean.intProperty('trustStoreType');
+            }
+
+            if (available('2.7.0')) {
+                bean.varArgProperty('cipherSuites', 'cipherSuites', cluster.sslContextFactory.cipherSuites)
+                    .varArgProperty('protocols', 'protocols', cluster.sslContextFactory.protocols);
             }
 
             cfg.beanProperty('sslContextFactory', bean);

@@ -191,8 +191,8 @@ export default class AbstractTransformer {
     }
 
     // Generate ssl group.
-    static clusterSsl(cluster) {
-        return this.toSection(this.generator.clusterSsl(cluster));
+    static clusterSsl(cluster, available) {
+        return this.toSection(this.generator.clusterSsl(cluster, available));
     }
 
     // Generate swap group.
