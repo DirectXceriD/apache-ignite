@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.apache.ignite.binary.BinaryTypeConfiguration;
+import org.apache.ignite.cache.CacheKeyConfiguration;
 import org.apache.ignite.cache.QueryEntity;
 import org.apache.ignite.cache.QueryIndex;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
@@ -171,7 +172,6 @@ public class WebConsoleConfigurationSelfTest {
         igniteCfgProps.add("serviceThreadPoolSize");
         igniteCfgProps.add("managementThreadPoolSize");
         igniteCfgProps.add("igfsThreadPoolSize");
-        igniteCfgProps.add("rebalanceThreadPoolSize");
         igniteCfgProps.add("utilityCacheThreadPoolSize");
         igniteCfgProps.add("utilityCacheKeepAliveTime");
         igniteCfgProps.add("asyncCallbackPoolSize");
@@ -211,6 +211,12 @@ public class WebConsoleConfigurationSelfTest {
 
         metadata.put(IgniteConfiguration.class,
             new MetadataInfo(igniteCfgProps, igniteCfgPropsDep, igniteCfgPropsExcl));
+
+        Set<String> cacheKeyCfgProps = new HashSet<>();
+        cacheKeyCfgProps.add("typeName");
+        cacheKeyCfgProps.add("affinityKeyFieldName");
+
+        metadata.put(CacheKeyConfiguration.class, new MetadataInfo(cacheKeyCfgProps, EMPTY_FIELDS, EMPTY_FIELDS));
 
         Set<String> atomicCfgProps = new HashSet<>();
         atomicCfgProps.add("cacheMode");
@@ -651,7 +657,7 @@ public class WebConsoleConfigurationSelfTest {
         cacheCfgProps.add("partitionLossPolicy");
         cacheCfgProps.add("readFromBackup");
         cacheCfgProps.add("copyOnRead");
-        cacheCfgProps.add("isInvalidate");
+        cacheCfgProps.add("invalidate");
         cacheCfgProps.add("affinityMapper");
         cacheCfgProps.add("topologyValidator");
         cacheCfgProps.add("maxConcurrentAsyncOperations");
@@ -701,12 +707,29 @@ public class WebConsoleConfigurationSelfTest {
         cacheCfgProps.add("indexedTypes");
         cacheCfgProps.add("queryEntities");
         cacheCfgProps.add("pluginConfigurations");
+        cacheCfgProps.add("cacheWriterFactory");
+        cacheCfgProps.add("cacheLoaderFactory");
+        cacheCfgProps.add("expiryPolicyFactory");
+        cacheCfgProps.add("storeConcurrentLoadAllThreshold");
+        cacheCfgProps.add("sqlIndexMaxInlineSize");
+        cacheCfgProps.add("sqlOnheapCacheEnabled");
+        cacheCfgProps.add("sqlOnheapCacheMaxSize");
+        cacheCfgProps.add("diskPageCompression");
+        cacheCfgProps.add("diskPageCompressionLevel");
+        cacheCfgProps.add("interceptor");
+        cacheCfgProps.add("storeByValue");
+        cacheCfgProps.add("eagerTtl");
+        cacheCfgProps.add("encryptionEnabled");
+        cacheCfgProps.add("eventsDisabled");
+        cacheCfgProps.add("maxQueryIteratorsCount");
 
         Set<String> cacheCfgPropsDep = new HashSet<>();
         // Removed since 2.0.
         // cacheCfgPropsDep.add("atomicWriteOrderMode");
         cacheCfgPropsDep.add("memoryPolicyName");
         cacheCfgPropsDep.add("longQueryWarningTimeout");
+        cacheCfgPropsDep.add("rebalanceThreadPoolSize");
+        cacheCfgPropsDep.add("transactionManagerLookupClassName");
 
         Set<String> cacheCfgPropsExcl = new HashSet<>();
         cacheCfgPropsExcl.add("nodeFilter");

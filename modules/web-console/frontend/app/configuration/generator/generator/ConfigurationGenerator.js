@@ -2123,6 +2123,10 @@ export default class IgniteConfigurationGenerator {
                 .boolProperty('swapEnabled');
         }
 
+        ccfg.beanProperty('cacheWriterFactory', new EmptyBean(cache.cacheWriterFactory))
+            .beanProperty('cacheLoaderFactory', new EmptyBean(cache.cacheLoaderFactory))
+            .beanProperty('expiryPolicyFactory', new EmptyBean(cache.expiryPolicyFactory));
+
         return ccfg;
     }
 
@@ -2157,6 +2161,13 @@ export default class IgniteConfigurationGenerator {
             ccfg.intProperty('queryParallelism')
                 .intProperty('sqlIndexMaxInlineSize');
         }
+
+        if (available('2.4.0') && cache.sqlOnheapCacheEnabled) {
+            ccfg.boolProperty('sqlOnheapCacheEnabled')
+                .intProperty('sqlOnheapCacheMaxSize');
+        }
+
+        ccfg.intProperty('maxQueryIteratorsCount');
 
         return ccfg;
     }
@@ -2252,7 +2263,8 @@ export default class IgniteConfigurationGenerator {
                 ccfg.beanProperty('cacheStoreFactory', bean);
         }
 
-        ccfg.boolProperty('storeKeepBinary')
+        ccfg.intProperty('storeConcurrentLoadAllThreshold')
+            .boolProperty('storeKeepBinary')
             .boolProperty('loadPreviousValue')
             .boolProperty('readThrough')
             .boolProperty('writeThrough');
@@ -2350,6 +2362,25 @@ export default class IgniteConfigurationGenerator {
         return ccfg;
     }
 
+    // Generate miscellaneous configuration.
+    static cacheMisc(cache, available, cfg = this.cacheConfigurationBean(cache)) {
+        if (cache.interceptor)
+            cfg.beanProperty('interceptor', new EmptyBean(cache.interceptor));
+
+        if (available('2.0.0'))
+            cfg.boolProperty('storeByValue');
+
+        cfg.boolProperty('eagerTtl');
+
+        if (available('2.7.0'))
+            cfg.boolProperty('encryptionEnabled');
+
+        if (available('2.5.0'))
+            cfg.boolProperty('eventsDisabled');
+
+        return cfg;
+    }
+
     // Generate server near cache group.
     static cacheNearServer(cache, available, ccfg = this.cacheConfigurationBean(cache)) {
         if (ccfg.valueOf('cacheMode') === 'PARTITIONED' && _.get(cache, 'nearConfiguration.enabled')) {
@@ -2419,6 +2450,7 @@ export default class IgniteConfigurationGenerator {
         this.cacheNodeFilter(cache, igfs ? [igfs] : [], ccfg);
         this.cacheConcurrency(cache, available, ccfg);
         this.cacheRebalance(cache, ccfg);
+        this.cacheMisc(cache, available, ccfg);
         this.cacheNearServer(cache, available, ccfg);
         this.cacheStatistics(cache, ccfg);
         this.cacheDomains(cache.domains, available, ccfg);

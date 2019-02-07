@@ -182,6 +182,14 @@ module.exports.factory = function(mongoose) {
         offHeapMaxMemory: Number,
         startSize: Number,
         swapEnabled: Boolean,
+        cacheWriterFactory: String,
+        cacheLoaderFactory: String,
+        expiryPolicyFactory: String,
+        interceptor: String,
+        storeByValue: Boolean,
+        eagerTtl: {type: Boolean, default: true},
+        encryptionEnabled: Boolean,
+        eventsDisabled: Boolean,
 
         onheapCacheEnabled: Boolean,
 
@@ -251,6 +259,8 @@ module.exports.factory = function(mongoose) {
                 hibernateProperties: [{name: String, value: String}]
             }
         },
+        storeConcurrentLoadAllThreshold: Number,
+        maxQueryIteratorsCount: Number,
         storeKeepBinary: Boolean,
         loadPreviousValue: Boolean,
         readThrough: Boolean,

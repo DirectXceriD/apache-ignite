@@ -280,6 +280,11 @@ export default class AbstractTransformer {
         return this.toSection(this.generator.cacheConcurrency(cache, available));
     }
 
+    // Generate cache misc group.
+    static cacheMisc(cache, available) {
+        return this.toSection(this.generator.cacheMisc(cache, available));
+    }
+
     // Generate cache node filter group.
     static cacheNodeFilter(cache, igfss) {
         return this.toSection(this.generator.cacheNodeFilter(cache, igfss));
