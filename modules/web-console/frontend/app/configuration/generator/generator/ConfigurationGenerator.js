@@ -469,7 +469,8 @@ export default class IgniteConfigurationGenerator {
                 .emptyBeanProperty('idMapper')
                 .emptyBeanProperty('nameMapper')
                 .emptyBeanProperty('serializer')
-                .intProperty('enum');
+                .boolProperty('enum')
+                .mapProperty('enumValues', _.map(type.enumValues, (v, idx) => ({name: v, value: idx})), 'enumValues');
 
             if (typeCfg.nonEmpty())
                 typeCfgs.push(typeCfg);
