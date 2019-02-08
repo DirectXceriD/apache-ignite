@@ -669,7 +669,7 @@ public class WebConsoleConfigurationSelfTest {
         // cacheCfgProps.add("memoryMode");
         // cacheCfgProps.add("offHeapMode");
         // cacheCfgProps.add("offHeapMaxMemory");
-        cacheCfgProps.add("evictionPolicy");
+        cacheCfgProps.add("evictionPolicyFactory");
         cacheCfgProps.add("evictionFilter");
         // Removed since 2.0.
         // cacheCfgProps.add("startSize");
@@ -722,6 +722,9 @@ public class WebConsoleConfigurationSelfTest {
         cacheCfgProps.add("encryptionEnabled");
         cacheCfgProps.add("eventsDisabled");
         cacheCfgProps.add("maxQueryIteratorsCount");
+        cacheCfgProps.add("keyConfiguration");
+        cacheCfgProps.add("cacheStoreSessionListenerFactories");
+        cacheCfgProps.add("affinity");
 
         Set<String> cacheCfgPropsDep = new HashSet<>();
         // Removed since 2.0.
@@ -730,9 +733,11 @@ public class WebConsoleConfigurationSelfTest {
         cacheCfgPropsDep.add("longQueryWarningTimeout");
         cacheCfgPropsDep.add("rebalanceThreadPoolSize");
         cacheCfgPropsDep.add("transactionManagerLookupClassName");
+        cacheCfgPropsDep.add("evictionPolicy");
 
         Set<String> cacheCfgPropsExcl = new HashSet<>();
         cacheCfgPropsExcl.add("nodeFilter");
+        cacheCfgPropsExcl.add("types");
 
         metadata.put(CacheConfiguration.class, new MetadataInfo(cacheCfgProps, cacheCfgPropsDep, cacheCfgPropsExcl));
 

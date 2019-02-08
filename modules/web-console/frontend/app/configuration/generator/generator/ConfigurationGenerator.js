@@ -2083,6 +2083,29 @@ export default class IgniteConfigurationGenerator {
         return ccfg;
     }
 
+    // Generate key configurations of cache.
+    static cacheKeyConfiguration(keyCfgs, available, cfg = this.igniteConfigurationBean()) {
+        if (available('2.1.0')) {
+            const items = _.reduce(keyCfgs, (acc, keyCfg) => {
+                if (keyCfg.typeName && keyCfg.affinityKeyFieldName) {
+                    acc.push(new Bean('org.apache.ignite.cache.CacheKeyConfiguration', null, keyCfg)
+                        .stringConstructorArgument('typeName')
+                        .stringConstructorArgument('affinityKeyFieldName'));
+                }
+
+                return acc;
+            }, []);
+
+            if (_.isEmpty(items))
+                return cfg;
+
+            cfg.arrayProperty('keyConfiguration', 'keyConfiguration', items,
+                'org.apache.ignite.cache.CacheKeyConfiguration');
+        }
+
+        return cfg;
+    }
+
     // Generate cache memory group.
     static cacheMemory(cache, available, ccfg = this.cacheConfigurationBean(cache)) {
         // Since ignite 2.0
@@ -2123,9 +2146,14 @@ export default class IgniteConfigurationGenerator {
                 .boolProperty('swapEnabled');
         }
 
-        ccfg.beanProperty('cacheWriterFactory', new EmptyBean(cache.cacheWriterFactory))
-            .beanProperty('cacheLoaderFactory', new EmptyBean(cache.cacheLoaderFactory))
-            .beanProperty('expiryPolicyFactory', new EmptyBean(cache.expiryPolicyFactory));
+        if (cache.cacheWriterFactory)
+            ccfg.beanProperty('cacheWriterFactory', new EmptyBean(cache.cacheWriterFactory));
+
+        if (cache.cacheLoaderFactory)
+            ccfg.beanProperty('cacheLoaderFactory', new EmptyBean(cache.cacheLoaderFactory));
+
+        if (cache.expiryPolicyFactory)
+            ccfg.beanProperty('expiryPolicyFactory', new EmptyBean(cache.expiryPolicyFactory));
 
         return ccfg;
     }
@@ -2378,6 +2406,12 @@ export default class IgniteConfigurationGenerator {
         if (available('2.5.0'))
             cfg.boolProperty('eventsDisabled');
 
+        if (cache.cacheStoreSessionListenerFactories) {
+            const factories = _.map(cache.cacheStoreSessionListenerFactories, (factory) => new EmptyBean(factory));
+
+            cfg.varArgProperty('cacheStoreSessionListenerFactories', 'cacheStoreSessionListenerFactories', factories, 'javax.cache.configuration.Factory');
+        }
+
         return cfg;
     }
 
@@ -2445,6 +2479,7 @@ export default class IgniteConfigurationGenerator {
         this.cacheMemory(cache, available, ccfg);
         this.cacheQuery(cache, cache.domains, available, ccfg);
         this.cacheStore(cache, cache.domains, available, ccfg);
+        this.cacheKeyConfiguration(cache.keyConfiguration, available, ccfg);
 
         const igfs = _.get(cache, 'nodeFilter.IGFS.instance');
         this.cacheNodeFilter(cache, igfs ? [igfs] : [], ccfg);
@@ -2483,7 +2518,9 @@ export default class IgniteConfigurationGenerator {
             case 'Chained':
                 bean = new Bean('org.apache.ignite.hadoop.util.ChainedUserNameMapper', 'mameMapper', mapper.Chained);
 
-                bean.arrayProperty('mappers', 'mappers', _.map(mapper.Chained.mappers, IgniteConfigurationGenerator._userNameMapperBean), 'org.apache.ignite.hadoop.util.UserNameMapper');
+                bean.arrayProperty('mappers', 'mappers',
+                    _.map(_.get(mapper, 'Chained.mappers'), IgniteConfigurationGenerator._userNameMapperBean),
+                    'org.apache.ignite.hadoop.util.UserNameMapper');
 
                 break;
 
@@ -2505,7 +2542,8 @@ export default class IgniteConfigurationGenerator {
                 break;
 
             case 'Custom':
-                bean = new Bean(mapper.Custom.className);
+                if (_.get(mapper, 'Custom.className'))
+                    bean = new EmptyBean(mapper.Custom.className);
 
                 break;
 
@@ -2537,7 +2575,9 @@ export default class IgniteConfigurationGenerator {
                     break;
 
                 case 'Custom':
-                    factoryBean = new Bean(secondFs.Custom.className, 'fac', null);
+                    if (_get(secondFs, 'Custom.className'))
+                        factoryBean = new Bean(secondFs.Custom.className, 'fac', null);
+
                     break;
 
                 default:
@@ -2556,8 +2596,12 @@ export default class IgniteConfigurationGenerator {
                         .longProperty('Kerberos.reloginInterval', 'reloginInterval');
                 }
 
-                if (_.get(secondFs, 'userNameMapper.kind'))
-                    factoryBean.beanProperty('userNameMapper', IgniteConfigurationGenerator._userNameMapperBean(secondFs.userNameMapper));
+                if (_.get(secondFs, 'userNameMapper.kind')) {
+                    const mapper = IgniteConfigurationGenerator._userNameMapperBean(secondFs.userNameMapper);
+
+                    if (mapper)
+                        factoryBean.beanProperty('userNameMapper', mapper);
+                }
             }
 
             bean.beanProperty('fileSystemFactory', factoryBean);

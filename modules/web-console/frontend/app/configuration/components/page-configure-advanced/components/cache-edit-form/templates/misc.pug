@@ -60,6 +60,36 @@ panel-collapsible(ng-form=form on-open=`ui.loadPanel('${form}')`)
                     name: '"eventsDisabled"',
                     tip: 'Disable events on this cache'
                 })
+            .pc-form-grid-col-60
+                mixin store-session-listener-factories()
+                    .ignite-form-field
+                        -let items = `${model}.cacheStoreSessionListenerFactories`;
+
+                        list-editable(
+                        ng-model=items
+                        list-editable-cols=`::[{
+                            name: 'Store session listener factories:',
+                            tip: 'Cache store session listener factories'
+                        }]`)
+                            list-editable-item-view {{ $item }}
+
+                            list-editable-item-edit
+                                +list-java-class-field('Listener', '$item', '"Listener"', items)
+                                    +form-field__error({
+                                        error: 'igniteUnique',
+                                        message: 'Listener with such class name already exists!'
+                                    })
+
+                            list-editable-no-items
+                                list-editable-add-item-button(
+                                    add-item=`$editLast((${items} = ${items} || []).push(""))`
+                                    label-single='listener'
+                                    label-multiple='listeners'
+                                )
+
+                - var form = '$parent.form'
+                +store-session-listener-factories
+                - var form = 'misc'
 
         .pca-form-column-6
             +preview-xml-java(model, 'cacheMisc')

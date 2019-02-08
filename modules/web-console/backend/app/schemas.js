@@ -191,6 +191,13 @@ module.exports.factory = function(mongoose) {
         encryptionEnabled: Boolean,
         eventsDisabled: Boolean,
 
+        keyConfiguration: [{
+            typeName: String,
+            affinityKeyFieldName: String
+        }],
+
+        cacheStoreSessionListenerFactories: [String],
+
         onheapCacheEnabled: Boolean,
 
         evictionPolicy: {

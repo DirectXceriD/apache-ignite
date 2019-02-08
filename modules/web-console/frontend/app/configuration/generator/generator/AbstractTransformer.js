@@ -260,6 +260,11 @@ export default class AbstractTransformer {
         return this.toSection(this.generator.cacheAffinity(cache, available));
     }
 
+    // Generate cache key configuration.
+    static cacheKeyConfiguration(cache, available) {
+        return this.toSection(this.generator.cacheKeyConfiguration(cache, available));
+    }
+
     // Generate cache memory group.
     static cacheMemory(cache, available) {
         return this.toSection(this.generator.cacheMemory(cache, available));
