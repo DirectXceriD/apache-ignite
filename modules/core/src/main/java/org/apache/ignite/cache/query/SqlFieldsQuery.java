@@ -74,7 +74,7 @@ public class SqlFieldsQuery extends Query<List<?>> {
     private boolean replicatedOnly;
 
     /** */
-    private boolean lazy;
+    private boolean lazy = true;
 
     /** Partitions for query */
     private int[] parts;
