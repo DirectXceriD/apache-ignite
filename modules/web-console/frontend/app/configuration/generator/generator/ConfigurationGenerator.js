@@ -126,7 +126,7 @@ export default class IgniteConfigurationGenerator {
 
         this.clusterPools(cluster, available, cfg);
         this.clusterTime(cluster, available, cfg);
-        this.clusterTransactions(cluster.transactionConfiguration, cfg);
+        this.clusterTransactions(cluster.transactionConfiguration, available, cfg);
         this.clusterUserAttributes(cluster, cfg);
 
         this.clusterCaches(cluster, cluster.caches, cluster.igfss, available, client, cfg);
@@ -1688,6 +1688,7 @@ export default class IgniteConfigurationGenerator {
             .longProperty('checkpointingFrequency')
             .longProperty('checkpointingPageBufferSize')
             .intProperty('checkpointingThreads')
+            .enumProperty('walMode')
             .stringProperty('walStorePath')
             .stringProperty('walArchivePath')
             .intProperty('walSegments')
@@ -1699,7 +1700,8 @@ export default class IgniteConfigurationGenerator {
             .longProperty('lockWaitTime')
             .longProperty('rateTimeInterval')
             .intProperty('tlbSize')
-            .intProperty('subIntervals');
+            .intProperty('subIntervals')
+            .longProperty('walAutoArchiveAfterInactivity');
 
         cfg.beanProperty('persistentStoreConfiguration', bean);
 
@@ -1833,7 +1835,7 @@ export default class IgniteConfigurationGenerator {
     }
 
     // Generate transactions group.
-    static clusterTransactions(transactionConfiguration, cfg = this.igniteConfigurationBean()) {
+    static clusterTransactions(transactionConfiguration, available, cfg = this.igniteConfigurationBean()) {
         const bean = new Bean('org.apache.ignite.configuration.TransactionConfiguration', 'transactionConfiguration',
             transactionConfiguration, clusterDflts.transactionConfiguration);
 
@@ -1844,6 +1846,14 @@ export default class IgniteConfigurationGenerator {
             .intProperty('pessimisticTxLogSize')
             .boolProperty('txSerializableEnabled')
             .emptyBeanProperty('txManagerFactory');
+
+        if (available('2.5.0'))
+            bean.longProperty('txTimeoutOnPartitionMapExchange');
+
+        if (available('2.8.0'))
+            bean.longProperty('deadlockTimeout');
+
+        bean.boolProperty('useJtaSynchronization');
 
         if (bean.nonEmpty())
             cfg.beanProperty('transactionConfiguration', bean);
