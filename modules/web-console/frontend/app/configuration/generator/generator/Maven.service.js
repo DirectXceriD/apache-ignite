@@ -20,7 +20,7 @@ import VersionService from 'app/services/Version.service';
 
 const versionService = new VersionService();
 
-// Java built-in class names.
+// Pom dependency information.
 import POM_DEPENDENCIES from 'app/data/pom-dependencies.json';
 
 /**

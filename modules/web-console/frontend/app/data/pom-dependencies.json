@@ -15,7 +15,7 @@
         {"groupId": "com.mchange", "artifactId": "c3p0", "version": "0.9.5.2"},
         {"groupId": "com.mchange", "artifactId": "mchange-commons-java", "version": "0.2.11"}
     ],
-    "MySQL": {"groupId": "mysql", "artifactId": "mysql-connector-java", "version": "8.0.13"},
+    "MySQL": {"groupId": "mysql", "artifactId": "mysql-connector-java", "version": "8.0.15"},
     "PostgreSQL": {"groupId": "org.postgresql", "artifactId": "postgresql", "version": "42.2.5"},
     "H2": {"groupId": "com.h2database", "artifactId": "h2", "version": [
         {"range": ["1.0.0", "2.0.0"], "version": "1.4.191"},
