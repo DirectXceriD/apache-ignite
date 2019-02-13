@@ -45,7 +45,7 @@ public abstract class ImpurityHistogramsComputer<S extends ImpurityComputer<Boot
     private static final long serialVersionUID = -4984067145908187508L;
 
     /**
-     * Computes histograms for each features.
+     * Computes histograms for each feature.
      *
      * @param roots Random forest roots.
      * @param histMeta Histograms meta.
@@ -168,7 +168,7 @@ public abstract class ImpurityHistogramsComputer<S extends ImpurityComputer<Boot
          * @param other Other instance.
          */
         public NodeImpurityHistograms<S> plus(NodeImpurityHistograms<S> other) {
-            assert nodeId == other.nodeId;
+            assert nodeId.equals(other.nodeId);
             NodeImpurityHistograms<S> res = new NodeImpurityHistograms<>(nodeId);
             addTo(this.perFeatureStatistics, res.perFeatureStatistics);
             addTo(other.perFeatureStatistics, res.perFeatureStatistics);
