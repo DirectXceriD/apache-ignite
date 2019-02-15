@@ -21,14 +21,8 @@ import omit from 'lodash/fp/omit';
 import {CacheModes, AtomicityModes, ShortCache} from '../types';
 import {Menu} from 'app/types';
 
-const JDBC_LINKS = {
-    Oracle: 'https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html',
-    DB2: 'http://www-01.ibm.com/support/docview.wss?uid=swg21363866',
-    SQLServer: 'https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server?view=sql-server-2017'
-};
-
 export default class Caches {
-    static $inject = ['$http'];
+    static $inject = ['$http', 'JDBC_LINKS'];
 
     cacheModes: Menu<CacheModes> = [
         {value: 'LOCAL', label: 'LOCAL'},
@@ -42,7 +36,7 @@ export default class Caches {
         {value: 'TRANSACTIONAL_SNAPSHOT', label: 'TRANSACTIONAL_SNAPSHOT'}
     ];
 
-    constructor(private $http: ng.IHttpService) {}
+    constructor(private $http: ng.IHttpService, private JDBC_LINKS) {}
 
     saveCache(cache) {
         return this.$http.post('/api/v1/configuration/caches/save', cache);
@@ -236,6 +230,6 @@ export default class Caches {
     }
 
     JDBCDriverURL(storeFactory) {
-        return JDBC_LINKS[get(storeFactory, 'dialect')];
+        return this.JDBC_LINKS[get(storeFactory, 'dialect')];
     }
 }

@@ -27,14 +27,8 @@ const uniqueNameValidator = (defaultName = '') => (a, items = []) => {
     return a && !items.some((b) => b._id !== a._id && (a.name || defaultName) === (b.name || defaultName));
 };
 
-const JDBC_LINKS = {
-    Oracle: 'https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html',
-    DB2: 'http://www-01.ibm.com/support/docview.wss?uid=swg21363866',
-    SQLServer: 'https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server?view=sql-server-2017'
-};
-
 export default class Clusters {
-    static $inject = ['$http'];
+    static $inject = ['$http', 'JDBC_LINKS'];
 
     discoveries: Menu<DiscoveryKinds> = [
         {value: 'Vm', label: 'Static IPs'},
@@ -82,7 +76,7 @@ export default class Clusters {
     /**
      * Cluster-related configuration stuff
      */
-    constructor(private $http: ng.IHttpService) {}
+    constructor(private $http: ng.IHttpService, private JDBC_LINKS) {}
 
     getConfiguration(clusterID: string) {
         return this.$http.get(`/api/v1/configuration/${clusterID}`);
@@ -235,7 +229,7 @@ export default class Clusters {
     }
 
     JDBCDriverURL(dataSrc) {
-        return JDBC_LINKS[get(dataSrc, 'dialect')];
+        return this.JDBC_LINKS[get(dataSrc, 'dialect')];
     }
 
     dataRegion = {
