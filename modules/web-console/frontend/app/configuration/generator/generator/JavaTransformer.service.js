@@ -17,6 +17,8 @@
 
 import {nonEmpty} from 'app/utils/lodashMixins';
 
+import { Bean } from './Beans';
+
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 import VersionService from 'app/services/Version.service';
@@ -412,7 +414,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                 case 'PROPERTY_INT':
                     return `Integer.parseInt(props.getProperty("${item}"))`;
                 default:
-                    if (this._isBean(clsName)) {
+                    if (this._isBean(clsName) || val instanceof Bean) {
                         if (item.isComplex())
                             return item.id;
 

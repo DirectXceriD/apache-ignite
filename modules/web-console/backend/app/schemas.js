@@ -119,12 +119,21 @@ module.exports.factory = function(mongoose) {
             javaFieldType: String
         }],
         queryKeyFields: [String],
-        fields: [{name: String, className: String}],
+        fields: [{
+            name: String,
+            className: String,
+            notNull: Boolean,
+            defaultValue: String,
+            precision: Number,
+            scale: Number
+        }],
         aliases: [{field: String, alias: String}],
         indexes: [{
             name: String,
             indexType: {type: String, enum: ['SORTED', 'FULLTEXT', 'GEOSPATIAL']},
-            fields: [{name: String, direction: Boolean}]
+            fields: [{name: String, direction: Boolean}],
+            inlineSizeType: Number,
+            inlineSize: Number
         }],
         generatePojo: Boolean
     });
@@ -179,6 +188,7 @@ module.exports.factory = function(mongoose) {
 
         backups: Number,
         memoryMode: {type: String, enum: ['ONHEAP_TIERED', 'OFFHEAP_TIERED', 'OFFHEAP_VALUES']},
+        offHeapMode: Number,
         offHeapMaxMemory: Number,
         startSize: Number,
         swapEnabled: Boolean,

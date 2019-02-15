@@ -733,6 +733,7 @@ public class WebConsoleConfigurationSelfTest {
         jdbcPojoStoreProps.add("hasher");
         jdbcPojoStoreProps.add("transformer");
         jdbcPojoStoreProps.add("sqlEscapeAll");
+        jdbcPojoStoreProps.add("types");
 
         // Configured via dataSource property.
         Set<String> jdbcPojoStorePropsExcl = new HashSet<>();
@@ -836,12 +837,17 @@ public class WebConsoleConfigurationSelfTest {
         qryEntityProps.add("keyFieldName");
         qryEntityProps.add("valueFieldName");
         qryEntityProps.add("keyFields");
+        qryEntityProps.add("fieldsPrecision");
+        qryEntityProps.add("notNullFields");
+        qryEntityProps.add("fieldsScale");
+        qryEntityProps.add("defaultFieldValues");
         metadata.put(QueryEntity.class, new MetadataInfo(qryEntityProps, EMPTY_FIELDS, EMPTY_FIELDS));
 
         Set<String> qryIdxProps = new HashSet<>();
         qryIdxProps.add("name");
         qryIdxProps.add("indexType");
         qryIdxProps.add("fields");
+        qryIdxProps.add("inlineSize");
 
         Set<String> qryIdxPropsExcl = new HashSet<>();
         qryIdxPropsExcl.add("fieldNames");
