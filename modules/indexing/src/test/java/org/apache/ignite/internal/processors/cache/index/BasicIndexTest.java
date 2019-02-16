@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.QueryEntity;
 import org.apache.ignite.cache.QueryIndex;
-import org.apache.ignite.cache.query.FieldsQueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.apache.ignite.configuration.CacheConfiguration;
@@ -73,6 +72,8 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
     /** */
     private static final String CLIENT_NAME = "client";
 
+    private static boolean createIdx = true;
+
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String igniteInstanceName) throws Exception {
         assertNotNull(inlineSize);
@@ -101,6 +102,9 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
         fields.put("valLong", Long.class.getName());
         fields.put("valPojo", Pojo.class.getName());
 
+        if (!createIdx)
+            indexes = Collections.emptyList();
+
         CacheConfiguration<Key, Val> ccfg = new CacheConfiguration<Key, Val>(DEFAULT_CACHE_NAME)
             .setQueryEntities(Collections.singleton(
                 new QueryEntity()
@@ -109,10 +113,9 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
                     .setFields(fields)
                     .setKeyFields(new HashSet<>(Arrays.asList("keyStr", "keyLong", "keyPojo")))
                     .setIndexes(indexes)
-                    .setAliases(Collections.singletonMap("_KEY", "pk_id"))
+                    .setAliases(Collections.singletonMap(QueryUtils.KEY_FIELD_NAME, "pk_id"))
             ))
-            .setSqlIndexMaxInlineSize(inlineSize)
-            /*.setIndexedTypes(Key.class, Val.class)*/;
+            .setSqlIndexMaxInlineSize(inlineSize);
 
         igniteCfg.setCacheConfiguration(ccfg);
 
@@ -278,12 +281,22 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
 
         srvLog.registerListener(staticCachesLsnr);
 
+        createIdx = false;
+
         IgniteEx ig0 = startGrid(0);
 
-        startGrid(1);
+        createIdx = true;
 
         if (persistEnabled)
             ig0.cluster().active(true);
+
+        IgniteCache<Key, Val> cache = grid(0).cache(DEFAULT_CACHE_NAME);
+
+        populateCache();
+
+        cache.query(new SqlFieldsQuery("create index \"idx0\" on Val(keyLong)"));
+
+        startGrid(1);
 
         assertFalse(staticCachesLsnr.check());
 
@@ -291,11 +304,7 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
 
         stopGrid(1);
 
-        IgniteCache<Key, Val> cache = grid(0).cache(DEFAULT_CACHE_NAME);
 
-        populateCache();
-
-        cache.query(new SqlFieldsQuery("create index \"idx0\" on Val(keyLong)"));
 /*        cache.query(new SqlFieldsQuery("create index \"idx0\" on Val(keyStr)"));
 
         cache.query(new SqlFieldsQuery("create index \"idx1\" on Val(keyStr, keyLong)"));
@@ -914,7 +923,6 @@ public class BasicIndexTest extends AbstractIndexingCommonTest {
     /** */
     private static class Val {
         /** */
-        @QuerySqlField(index = true)
         private String valStr;
 
         /** */

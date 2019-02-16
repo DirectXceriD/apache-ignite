@@ -733,6 +733,7 @@ public class GridH2Table extends TableBase {
             return QueryUtils.KEY_FIELD_NAME;
         else if (desc.isValueAliasColumn(col.column.getColumnId()))
             return QueryUtils.VAL_FIELD_NAME;
+
         return col.columnName;
     }
 
