@@ -87,8 +87,7 @@ import {default as ActivitiesData} from '../core/activities/Activities.data';
 
 const JDBC_LINKS = {
     Oracle: 'https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html',
-    DB2: 'http://www-01.ibm.com/support/docview.wss?uid=swg21363866',
-    SQLServer: 'https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server'
+    DB2: 'http://www-01.ibm.com/support/docview.wss?uid=swg21363866'
 };
 
 registerActivitiesHook.$inject = ['$uiRouter', 'IgniteActivitiesData'];

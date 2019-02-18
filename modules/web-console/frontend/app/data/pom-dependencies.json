@@ -23,6 +23,6 @@
         {"range": "2.7.0", "version": "1.4.197"}
     ]},
     "Oracle": {"groupId": "com.oracle.jdbc", "artifactId": "ojdbc8", "version": "18.3.0.0.0", "jar": "ojdbc8.jar", "link": "https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html"},
-    "DB2": {"groupId": "ibm", "artifactId": "jdbc", "version": "4.24.92", "jar": "db2jcc4.jar", "link": "http://www-01.ibm.com/support/docview.wss?uid=swg21363866"},
-    "SQLServer": {"groupId": "microsoft", "artifactId": "jdbc", "version": "7.0.0", "jar": "mssql-jdbc-7.0.0.jre8.jar", "link": "https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server"}
+    "DB2": {"groupId": "ibm", "artifactId": "jdbc", "version": "4.25.13", "jar": "db2jcc4.jar", "link": "http://www-01.ibm.com/support/docview.wss?uid=swg21363866"},
+    "SQLServer": {"groupId": "com.microsoft.sqlserver", "artifactId": "mssql-jdbc", "version": "7.2.1.jre8"}
 }

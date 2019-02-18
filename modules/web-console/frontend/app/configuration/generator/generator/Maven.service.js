@@ -16,9 +16,8 @@
  */
 
 import StringBuilder from './StringBuilder';
-import VersionService from 'app/services/Version.service';
 
-const versionService = new VersionService();
+import ArtifactVersionChecker from './ArtifactVersionChecker.service';
 
 // Pom dependency information.
 import POM_DEPENDENCIES from 'app/data/pom-dependencies.json';
@@ -52,12 +51,8 @@ export default class IgniteMavenGenerator {
         if (_.isNil(deps))
             return;
 
-        const extractVersion = (version) => {
-            return _.isArray(version) ? _.find(version, (v) => versionService.since(igniteVer, v.range)).version : version;
-        };
-
         _.forEach(_.castArray(deps), ({groupId, artifactId, version, jar, link}) => {
-            this.addDependency(acc, groupId || 'org.apache.ignite', artifactId, storedVer || extractVersion(version) || dfltVer, jar, link);
+            this.addDependency(acc, groupId || 'org.apache.ignite', artifactId, storedVer || ArtifactVersionChecker.extractVersion(igniteVer, version) || dfltVer, jar, link);
         });
     }
 
@@ -97,7 +92,7 @@ export default class IgniteMavenGenerator {
             }
 
             if (dep.link)
-                this.addComment(sb, `Download last available driver by link: ${dep.link}`);
+                this.addComment(sb, `You may download JDBC driver from: ${dep.link}`);
 
             sb.endBlock('</dependency>');
         });
@@ -162,64 +157,6 @@ export default class IgniteMavenGenerator {
             this.pickDependency(deps, storeFactory.dialect, null, igniteVer, storeFactory.implementationVersion);
     }
 
-    /**
-     * Tries to parse JDBC driver version.
-     *
-     * @param {String} ver - String representation of version.
-     * @returns {Array{int}} - Array of version parts.
-     */
-    _parse(ver) {
-        return _.map(ver.split(/[.-]/), (v) => parseInt(v, 10));
-    }
-
-    static _numberComparator(a, b) {
-        return a > b ? 1 : a < b ? -1 : 0;
-    }
-
-    /**
-     * Compare to version.
-     * @param {Object} a first compared version.
-     * @param {Object} b second compared version.
-     * @returns {Number} 1 if a > b, 0 if versions equals, -1 if a < b
-     */
-    _compare(a, b) {
-        let i = 0;
-        for (; i < a.length && i < b.length; i++) {
-            const res = this._numberComparator(a[i], b[i]);
-
-            if (res !== null)
-                return res;
-        }
-
-        return 0;
-    }
-
-    /**
-     * Stay only latest versions of the same dependencies.
-     * @param deps Array of dependencies.
-     */
-    _latestVersions(deps) {
-        return _.map(_.values(_.groupBy(_.uniqWith(deps, _.isEqual), (dep) => dep.groupId + dep.artifactId)), (arr) => {
-            if (arr.length > 1) {
-                try {
-                    let idx = 0;
-                    let i = 1;
-
-                    for (; i < arr.length; i++) {
-                        if (this._compare(this._parse(arr[i].version), this._parse(arr[idx].version)) > 0)
-                            idx = i;
-                    }
-                    return arr[idx];
-                }
-                catch (err) {
-                    return _.last(_.sortBy(arr, 'version'));
-                }
-            }
-
-            return arr[0];
-        });
-    }
-
     collectDependencies(cluster, targetVer) {
         const igniteVer = targetVer.ignite;
 
@@ -276,7 +213,7 @@ export default class IgniteMavenGenerator {
         if (cluster.logger && cluster.logger.kind)
             this.pickDependency(deps, cluster.logger.kind, igniteVer);
 
-        return _.uniqWith(deps.concat(this._latestVersions(storeDeps)), _.isEqual);
+        return _.uniqWith(deps.concat(ArtifactVersionChecker.latestVersions(storeDeps)), _.isEqual);
     }
 
     /**
