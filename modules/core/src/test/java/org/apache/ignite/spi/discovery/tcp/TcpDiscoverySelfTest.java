@@ -2251,6 +2251,54 @@ public class TcpDiscoverySelfTest extends GridCommonAbstractTest {
         }
     }
 
+
+    /**
+     * @throws Exception If any error occurs.
+     */
+    @Test
+    public void testFailureDetectionOnReceiptError() throws Exception {
+        TestReceiptFailedDiscoverySpi spi = new TestReceiptFailedDiscoverySpi();
+
+        nodeSpi.set(spi);
+
+        Ignite g0 = startGrid(0);
+
+        startGrid(1);
+
+        assertEquals(g0.cluster().nodes().size(), 2);
+
+        spi.receiptFailed = true;
+
+        assertTrue(GridTestUtils.waitForCondition(() ->
+            g0.cluster().forServers().nodes().size() == 1, 2 * spi.failureDetectionTimeout()));
+
+        spi.receiptFailed = false;
+
+        startGrid(2);
+
+        assertTrue(GridTestUtils.waitForCondition(() ->
+            g0.cluster().forServers().nodes().size() == 2, 2 * spi.failureDetectionTimeout()));
+
+        spi.receiptFailed = true;
+
+        IgniteInternalFuture f0 = GridTestUtils.runAsync(new Runnable() {
+            @Override public void run() {
+                try {
+                    U.sleep(spi.failureDetectionTimeout() / 10);
+                } catch (IgniteInterruptedCheckedException e) {
+                    // no op
+                }
+
+                spi.receiptFailed = false;
+            }
+        });
+
+        startGrid(3);
+
+        assertTrue(GridTestUtils.waitForCondition(() ->
+            g0.cluster().forServers().nodes().size() == 3, 2 * spi.failureDetectionTimeout()));
+    }
+
     /**
      * @param nodeName Node name.
      * @throws Exception If failed.
@@ -2303,6 +2351,20 @@ public class TcpDiscoverySelfTest extends GridCommonAbstractTest {
         /** {@inheritDoc} */
         @Override public boolean apply(UUID uuid, Object o) {
             return true;
+        }
+    }
+
+    /** */
+    private static class TestReceiptFailedDiscoverySpi extends TcpDiscoverySpi {
+        /** */
+        public volatile boolean receiptFailed;
+
+        /** {@inheritDoc} */
+        @Override protected int readReceipt(Socket sock, long timeout) throws IOException {
+            if (receiptFailed)
+                throw new IOException("Simulate receipt failed " + sock);
+
+            return super.readReceipt(sock, timeout);
         }
     }
 
