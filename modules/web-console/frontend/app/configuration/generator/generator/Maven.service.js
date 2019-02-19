@@ -18,9 +18,12 @@
 import StringBuilder from './StringBuilder';
 
 import ArtifactVersionChecker from './ArtifactVersionChecker.service';
+import VersionService from 'app/services/Version.service';
 
 // Pom dependency information.
 import POM_DEPENDENCIES from 'app/data/pom-dependencies.json';
+
+const versionService = new VersionService();
 
 /**
  * Pom file generation entry point.
@@ -43,6 +46,10 @@ export default class IgniteMavenGenerator {
 
     addDependency(deps, groupId, artifactId, version, jar, link) {
         deps.push({groupId, artifactId, version, jar, link});
+    }
+
+    _extractVersion(igniteVer, version) {
+        return _.isArray(version) ? _.find(version, (v) => versionService.since(igniteVer, v.range)).version : version;
     }
 
     pickDependency(acc, key, dfltVer, igniteVer, storedVer) {

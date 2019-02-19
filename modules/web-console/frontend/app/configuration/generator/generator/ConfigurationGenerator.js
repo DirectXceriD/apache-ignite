@@ -23,6 +23,7 @@ import IgniteClusterDefaults from './defaults/Cluster.service';
 import IgniteEventGroups from './defaults/Event-groups.service';
 import IgniteCacheDefaults from './defaults/Cache.service';
 import IgniteIGFSDefaults from './defaults/IGFS.service';
+import ArtifactVersionChecker from './ArtifactVersionChecker.service';
 
 import JavaTypes from '../../../services/JavaTypes.service';
 import VersionService from 'app/services/Version.service';
@@ -174,7 +175,7 @@ export default class IgniteConfigurationGenerator {
             case 'MySQL':
                 const dep = storeDeps
                     ? _.find(storeDeps, (d) => d.name === dialect)
-                    : _.first(this._latestVersions(this._getArtifact({dialect, implementationVersion}, available)));
+                    : _.first(ArtifactVersionChecker.latestVersions(this._getArtifact({dialect, implementationVersion}, available)));
 
                 const ver = parseInt(dep.version.split('.')[0], 10);
 
@@ -423,44 +424,6 @@ export default class IgniteConfigurationGenerator {
     }
 
     /**
-     * Get available for current configuration version.
-     *
-     * @param version Dependency version or array of available dependency versions.
-     * @param available Function to check version availability.
-     * @return {String} Available for current configuration version of dependency.
-     */
-    static _extractVersion(version, available) {
-        return _.isArray(version) ? _.find(version, (v) => available(v.range)).version : version;
-    }
-
-    /**
-     * Stay only latest versions of the same dependencies.
-     *
-     * @param deps Array of dependencies.
-     */
-    static _latestVersions(deps) {
-        return _.map(_.values(_.groupBy(_.uniqWith(deps, _.isEqual), (dep) => dep.name)), (arr) => {
-            if (arr.length > 1) {
-                try {
-                    let idx = 0;
-                    let i = 1;
-
-                    for (; i < arr.length; i++) {
-                        if (this._compare(this._parse(arr[i].version), this._parse(arr[idx].version)) > 0)
-                            idx = i;
-                    }
-                    return arr[idx];
-                }
-                catch (err) {
-                    return _.last(_.sortBy(arr, 'version'));
-                }
-            }
-
-            return arr[0];
-        });
-    }
-
-    /**
      * Get dependency artifact for specified datasource.
      *
      * @param source Datasource.
@@ -473,10 +436,14 @@ export default class IgniteConfigurationGenerator {
         if (!deps)
             return [];
 
+        const extractVersion = (version) => {
+            return _.isArray(version) ? _.find(version, (v) => available(v.range)).version : version;
+        };
+
         return _.map(_.castArray(deps), ({version}) => {
             return ({
                 name: source.dialect,
-                version: source.implementationVersion || this._extractVersion(version, available)
+                version: source.implementationVersion || extractVersion(version)
             });
         });
     }
@@ -497,7 +464,7 @@ export default class IgniteConfigurationGenerator {
                 usedDataSourceVersions.push(...this._getArtifact(cache.cacheStoreFactory[cache.cacheStoreFactory.kind], available));
         });
 
-        const useDeps = _.uniqWith(this._latestVersions(usedDataSourceVersions), _.isEqual);
+        const useDeps = _.uniqWith(ArtifactVersionChecker.latestVersions(usedDataSourceVersions), _.isEqual);
         const ccfgs = _.map(caches, (cache) => this.cacheConfiguration(cache, available, useDeps));
 
         if (!client) {

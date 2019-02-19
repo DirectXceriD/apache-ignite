@@ -83,8 +83,4 @@ export default class ArtifactVersionChecker {
             return arr[0];
         });
     }
-
-    static extractVersion(igniteVer, version) {
-        return _.isArray(version) ? _.find(version, (v) => versionService.since(igniteVer, v.range)).version : version;
-    }
 }
