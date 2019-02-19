@@ -15,26 +15,20 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.processors.cache.persistence;
+package org.apache.ignite.internal.processors.configuration.distributed;
 
-import org.apache.ignite.internal.util.future.GridFutureAdapter;
+import org.apache.ignite.IgniteCheckedException;
 
 /**
- * Checkpoint futures.
+ * Exception of distributed property still have not been allowed for write value.
  */
-public interface CheckpointFuture {
+public class NotWritablePropertyException extends IgniteCheckedException {
+    /** */
+    private static final long serialVersionUID = 0L;
     /**
-     * @return Begin future.
+     * @param name Name of detached property.
      */
-    public GridFutureAdapter beginFuture();
-
-    /**
-     * @return Finish future.
-     */
-    public GridFutureAdapter<Object> finishFuture();
-
-    /**
-     * @return Checkpoint was already started.
-     */
-    public boolean started();
+    public NotWritablePropertyException(String name) {
+        super("Property '" + name + "' is not ready for cluster wide update, perhaps cluster is not active yet.");
+    }
 }
