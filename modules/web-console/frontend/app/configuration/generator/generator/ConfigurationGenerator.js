@@ -209,8 +209,7 @@ export default class IgniteConfigurationGenerator {
         if (isNil(cluster.discovery))
             return cfg;
 
-        const discovery = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery',
-            cluster.discovery, clusterDflts.discovery);
+        const discovery = IgniteConfigurationGenerator.discoveryConfigurationBean(cluster.discovery);
 
         let ipFinder;
 
@@ -430,6 +429,7 @@ export default class IgniteConfigurationGenerator {
 
     // Generate atomics group.
     static clusterAtomics(atomics, available, cfg = this.igniteConfigurationBean()) {
+        const available2_1 = available('2.1.0');
         const acfg = new Bean('org.apache.ignite.configuration.AtomicConfiguration', 'atomicCfg',
             atomics, clusterDflts.atomics);
 
@@ -439,8 +439,11 @@ export default class IgniteConfigurationGenerator {
         if (acfg.valueOf('cacheMode') === 'PARTITIONED')
             acfg.intProperty('backups');
 
-        if (available('2.1.0') && nonNil(atomics))
+        if (available2_1 && nonNil(atomics))
             this.affinity(atomics.affinity, acfg);
+
+        if (available2_1)
+            acfg.stringProperty('groupName');
 
         if (acfg.isEmpty())
             return cfg;
@@ -906,7 +909,13 @@ export default class IgniteConfigurationGenerator {
             .intProperty('unacknowledgedMessagesBufferSize')
             .longProperty('socketWriteTimeout')
             .intProperty('selectorsCount')
-            .emptyBeanProperty('addressResolver');
+            .longProperty('selectorSpins')
+            .intProperty('connectionsPerNode')
+            .emptyBeanProperty('addressResolver')
+            .boolProperty('usePairedConnections');
+
+        if (available('2.3.0'))
+            commSpi.boolProperty('filterReachableAddresses');
 
         if (commSpi.nonEmpty())
             cfg.beanProperty('communicationSpi', commSpi);
@@ -1042,8 +1051,18 @@ export default class IgniteConfigurationGenerator {
             .intProperty('reconnectCount')
             .longProperty('statisticsPrintFrequency')
             .longProperty('ipFinderCleanFrequency')
-            .emptyBeanProperty('authenticator')
-            .intProperty('forceServerMode')
+            .emptyBeanProperty('authenticator');
+
+        if (available('2.4.0'))
+            discoSpi.longProperty('reconnectDelay');
+
+        if (available('2.7.0'))
+            discoSpi.longProperty('connectionRecoveryTimeout');
+
+        if (available('2.8.0'))
+            discoSpi.intProperty('soLinger');
+
+        discoSpi.intProperty('forceServerMode')
             .intProperty('clientReconnectDisabled');
 
         if (discoSpi.nonEmpty())
@@ -1441,6 +1460,8 @@ export default class IgniteConfigurationGenerator {
         if (!available('2.3.0'))
             return cfg;
 
+        const available2_4 = available('2.4.0');
+        const available2_7 = available('2.7.0');
         const storageBean = new Bean('org.apache.ignite.configuration.DataStorageConfiguration', 'dataStorageCfg', dataStorageCfg, clusterDflts.dataStorageConfiguration);
 
         storageBean.intProperty('pageSize')
@@ -1470,7 +1491,7 @@ export default class IgniteConfigurationGenerator {
         storageBean.stringProperty('storagePath')
             .longProperty('checkpointFrequency');
 
-        if (available('2.7.0')) {
+        if (available2_7) {
             storageBean
                 .longProperty('checkpointReadLockTimeout');
         }
@@ -1479,12 +1500,17 @@ export default class IgniteConfigurationGenerator {
             .enumProperty('checkpointWriteOrder')
             .enumProperty('walMode')
             .stringProperty('walPath')
-            .stringProperty('walArchivePath')
+            .stringProperty('walArchivePath');
+
+        if (available2_7)
+            storageBean.longProperty('maxWalArchiveSize');
+
+        storageBean.longProperty('walAutoArchiveAfterInactivity')
             .intProperty('walSegments')
             .intProperty('walSegmentSize')
             .intProperty('walHistorySize');
 
-        if (available('2.4.0'))
+        if (available2_4)
             storageBean.intProperty('walBufferSize');
 
         storageBean.longProperty('walFlushFrequency')
@@ -1494,13 +1520,15 @@ export default class IgniteConfigurationGenerator {
             .intProperty('walThreadLocalBufferSize')
             .intProperty('metricsSubIntervalCount')
             .longProperty('metricsRateTimeInterval')
-            .longProperty('walAutoArchiveAfterInactivity')
             .boolProperty('metricsEnabled')
             .boolProperty('alwaysWriteFullPages')
             .boolProperty('writeThrottlingEnabled');
 
-        if (available('2.4.0'))
+        if (available2_4)
             storageBean.boolProperty('walCompactionEnabled');
+
+        if (available2_7)
+            storageBean.intProperty('walCompactionLevel');
 
         const fileIOFactory = _.get(dataStorageCfg, 'fileIOFactory');
 

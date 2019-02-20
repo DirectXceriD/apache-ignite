@@ -415,6 +415,9 @@ module.exports.factory = function(mongoose) {
             authenticator: String,
             forceServerMode: Boolean,
             clientReconnectDisabled: Boolean,
+            connectionRecoveryTimeout: Number,
+            reconnectDelay: Number,
+            soLinger: Number,
             kind: {
                 type: String,
                 enum: ['Vm', 'Multicast', 'S3', 'Cloud', 'GoogleStorage', 'Jdbc', 'SharedFs', 'ZooKeeper', 'Kubernetes']
@@ -576,7 +579,8 @@ module.exports.factory = function(mongoose) {
                 Custom: {
                     className: String
                 }
-            }
+            },
+            groupName: String
         },
         binaryConfiguration: {
             idMapper: String,
@@ -650,7 +654,11 @@ module.exports.factory = function(mongoose) {
             unacknowledgedMessagesBufferSize: Number,
             socketWriteTimeout: Number,
             selectorsCount: Number,
-            addressResolver: String
+            addressResolver: String,
+            selectorSpins: Number,
+            connectionsPerNode: Number,
+            usePairedConnections: Boolean,
+            filterReachableAddresses: Boolean
         },
         connector: {
             enabled: Boolean,
@@ -1061,7 +1069,9 @@ module.exports.factory = function(mongoose) {
             walAutoArchiveAfterInactivity: Number,
             writeThrottlingEnabled: Boolean,
             walCompactionEnabled: Boolean,
-            checkpointReadLockTimeout: Number
+            checkpointReadLockTimeout: Number,
+            maxWalArchiveSize: Number,
+            walCompactionLevel: Number
         },
         memoryConfiguration: {
             systemCacheInitialSize: Number,
