@@ -421,7 +421,11 @@ const DFLT_CLUSTER = {
         sslEnabled: false,
         useIgniteSslContextFactory: true,
         sslClientAuth: false
-    }
+    },
+    authenticationEnabled: false,
+    sqlQueryHistorySize: 1000,
+    allSegmentationResolversPassRequired: true,
+    networkCompressionLevel: 1
 };
 
 export default class IgniteClusterDefaults {

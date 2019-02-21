@@ -16,6 +16,7 @@
  */
 
 import get from 'lodash/get';
+import find from 'lodash/find';
 import {from} from 'rxjs';
 import ObjectID from 'bson-objectid/objectid';
 import {uniqueName} from 'app/utils/uniqueName';
@@ -202,7 +203,7 @@ export default class Clusters {
             igfss: [],
             models: [],
             checkpointSpi: [],
-            loadBalancingSpi: []
+            loadBalancingSpi: [],
         };
     }
 
@@ -472,6 +473,11 @@ export default class Clusters {
             }
         }
     };
+
+    persistenceEnabled(dataStorage) {
+        return !!(get(dataStorage, 'defaultDataRegionConfiguration.persistenceEnabled')
+            || find(get(dataStorage, 'dataRegionConfigurations'), (storeCfg) => storeCfg.persistenceEnabled));
+    }
 
     swapSpaceSpi = {
         readStripesNumber: {

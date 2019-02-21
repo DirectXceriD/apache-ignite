@@ -91,7 +91,7 @@ export default class IgniteConfigurationGenerator {
 
         // Since ignite 2.3
         if (available('2.3.0'))
-            this.clusterDataStorageConfiguration(cluster.dataStorageConfiguration, available, cfg);
+            this.clusterDataStorageConfiguration(cluster, available, cfg);
 
         this.clusterDeployment(cluster, available, cfg);
         this.clusterEvents(cluster, available, cfg);
@@ -1437,9 +1437,11 @@ export default class IgniteConfigurationGenerator {
     }
 
     // Generate data storage configuration.
-    static clusterDataStorageConfiguration(dataStorageCfg, available, cfg = this.igniteConfigurationBean()) {
+    static clusterDataStorageConfiguration(cluster, available, cfg = this.igniteConfigurationBean(cluster)) {
         if (!available('2.3.0'))
             return cfg;
+
+        const dataStorageCfg = cluster.dataStorageConfiguration;
 
         const storageBean = new Bean('org.apache.ignite.configuration.DataStorageConfiguration', 'dataStorageCfg', dataStorageCfg, clusterDflts.dataStorageConfiguration);
 
@@ -1514,22 +1516,35 @@ export default class IgniteConfigurationGenerator {
         if (factoryBean)
             storageBean.beanProperty('fileIOFactory', factoryBean);
 
-        if (storageBean.isEmpty())
-            return cfg;
+        if (_.get(dataStorageCfg, 'defaultDataRegionConfiguration.persistenceEnabled')
+            || _.find(_.get(dataStorageCfg, 'dataRegionConfigurations'), (storeCfg) => storeCfg.persistenceEnabled))
+            cfg.boolProperty('authenticationEnabled');
 
-        cfg.beanProperty('dataStorageConfiguration', storageBean);
+        if (storageBean.nonEmpty())
+            cfg.beanProperty('dataStorageConfiguration', storageBean);
 
         return cfg;
     }
 
     // Generate miscellaneous configuration.
     static clusterMisc(cluster, available, cfg = this.igniteConfigurationBean(cluster)) {
-        cfg.stringProperty('workDirectory');
+        const available2_0 = available('2.0.0');
 
-        if (available('2.0.0')) {
+        cfg.stringProperty('workDirectory')
+            .arrayProperty('lifecycleBeans', 'lifecycleBeans', _.map(cluster.lifecycleBeans, (bean) => new EmptyBean(bean)), 'org.apache.ignite.lifecycle.LifecycleBean')
+            .emptyBeanProperty('addressResolver')
+            .emptyBeanProperty('mBeanServer');
+
+        if (available2_0) {
             cfg.stringProperty('consistentId')
-                .emptyBeanProperty('warmupClosure')
-                .boolProperty('activeOnStart')
+                .emptyBeanProperty('warmupClosure');
+        }
+
+        if (available('2.8.0'))
+            cfg.intProperty('sqlQueryHistorySize');
+
+        if (available2_0) {
+            cfg.boolProperty('activeOnStart')
                 .boolProperty('cacheSanityCheckEnabled');
         }
 

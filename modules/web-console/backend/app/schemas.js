@@ -1118,7 +1118,13 @@ module.exports.factory = function(mongoose) {
             subIntervals: Number
         },
         mvccVacuumThreadCount: Number,
-        mvccVacuumFrequency: Number
+        mvccVacuumFrequency: Number,
+        authenticationEnabled: Boolean,
+        sqlQueryHistorySize: Number,
+        lifecycleBeans: [String],
+        addressResolver: String,
+        mBeanServer: String,
+        networkCompressionLevel: Number
     });
 
     Cluster.index({name: 1, space: 1}, {unique: true});
