@@ -421,6 +421,12 @@ const DFLT_CLUSTER = {
         sslEnabled: false,
         useIgniteSslContextFactory: true,
         sslClientAuth: false
+    },
+    encryptionSpi: {
+        Keystore: {
+            keySize: 256,
+            masterKeyName: 'ignite.master.key'
+        }
     }
 };
 

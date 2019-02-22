@@ -1118,7 +1118,18 @@ module.exports.factory = function(mongoose) {
             subIntervals: Number
         },
         mvccVacuumThreadCount: Number,
-        mvccVacuumFrequency: Number
+        mvccVacuumFrequency: Number,
+        encryptionSpi: {
+            kind: {type: String, enum: ['Noop', 'Keystore', 'Custom']},
+            Keystore: {
+                keySize: Number,
+                masterKeyName: String,
+                keyStorePath: String
+            },
+            Custom: {
+                className: String
+            }
+        }
     });
 
     Cluster.index({name: 1, space: 1}, {unique: true});
