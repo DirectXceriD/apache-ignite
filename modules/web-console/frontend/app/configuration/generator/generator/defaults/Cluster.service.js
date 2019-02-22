@@ -425,7 +425,8 @@ const DFLT_CLUSTER = {
     authenticationEnabled: false,
     sqlQueryHistorySize: 1000,
     allSegmentationResolversPassRequired: true,
-    networkCompressionLevel: 1
+    networkCompressionLevel: 1,
+    autoActivationEnabled: true
 };
 
 export default class IgniteClusterDefaults {

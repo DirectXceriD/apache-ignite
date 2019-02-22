@@ -204,6 +204,7 @@ export default class Clusters {
             models: [],
             checkpointSpi: [],
             loadBalancingSpi: [],
+            autoActivationEnabled: true
         };
     }
 

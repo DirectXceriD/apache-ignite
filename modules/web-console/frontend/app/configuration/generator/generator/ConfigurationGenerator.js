@@ -915,6 +915,9 @@ export default class IgniteConfigurationGenerator {
             .longProperty('networkSendRetryDelay')
             .intProperty('networkSendRetryCount');
 
+        if (available('2.5.0'))
+            cfg.emptyBeanProperty('communicationFailureResolver');
+
         if (available(['1.0.0', '2.3.0']))
             cfg.longProperty('discoveryStartupDelay');
 
@@ -1531,14 +1534,25 @@ export default class IgniteConfigurationGenerator {
         const available2_0 = available('2.0.0');
 
         cfg.stringProperty('workDirectory')
-            .arrayProperty('lifecycleBeans', 'lifecycleBeans', _.map(cluster.lifecycleBeans, (bean) => new EmptyBean(bean)), 'org.apache.ignite.lifecycle.LifecycleBean')
+            .varArgProperty('lifecycleBeans', 'lifecycleBeans', _.map(cluster.lifecycleBeans, (bean) => new EmptyBean(bean)), 'org.apache.ignite.lifecycle.LifecycleBean')
             .emptyBeanProperty('addressResolver')
-            .emptyBeanProperty('mBeanServer');
+            .emptyBeanProperty('mBeanServer')
+            .varArgProperty('includeProperties', 'includeProperties', cluster.includeProperties);
+
+        if (cluster.cacheStoreSessionListenerFactories) {
+            const factories = _.map(cluster.cacheStoreSessionListenerFactories, (factory) => new EmptyBean(factory));
+
+            cfg.varArgProperty('cacheStoreSessionListenerFactories', 'cacheStoreSessionListenerFactories', factories, 'javax.cache.configuration.Factory');
+        }
 
         if (available2_0) {
             cfg.stringProperty('consistentId')
-                .emptyBeanProperty('warmupClosure');
+                .emptyBeanProperty('warmupClosure')
+                .stringProperty('igniteInstanceName');
         }
+
+        if (available('2.7.0'))
+            cfg.varArgProperty('sqlSchemas', 'sqlSchemas', cluster.sqlSchemas);
 
         if (available('2.8.0'))
             cfg.intProperty('sqlQueryHistorySize');
@@ -1547,6 +1561,9 @@ export default class IgniteConfigurationGenerator {
             cfg.boolProperty('activeOnStart')
                 .boolProperty('cacheSanityCheckEnabled');
         }
+
+        if (available('2.4.0'))
+            cfg.boolProperty('autoActivationEnabled');
 
         if (available(['1.0.0', '2.1.0']))
             cfg.boolProperty('lateAffinityAssignment');

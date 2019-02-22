@@ -195,6 +195,12 @@ public class WebConsoleConfigurationSelfTest {
         igniteCfgProps.add("addressResolver");
         igniteCfgProps.add("mBeanServer");
         igniteCfgProps.add("networkCompressionLevel");
+        igniteCfgProps.add("systemWorkerBlockedTimeout");
+        igniteCfgProps.add("includeProperties");
+        igniteCfgProps.add("cacheStoreSessionListenerFactories");
+        igniteCfgProps.add("sqlSchemas");
+        igniteCfgProps.add("igniteInstanceName");
+        igniteCfgProps.add("communicationFailureResolver");
 
         Set<String> igniteCfgPropsDep = new HashSet<>();
         igniteCfgPropsDep.add("gridName");
@@ -215,7 +221,11 @@ public class WebConsoleConfigurationSelfTest {
         igniteCfgPropsExcl.add("allSegmentationResolversPassRequired");
         igniteCfgPropsExcl.add("segmentationPolicy");
         igniteCfgPropsExcl.add("segmentationResolveAttempts");
+        igniteCfgPropsExcl.add("waitForSegmentOnStart");
         igniteCfgPropsExcl.add("segmentationResolvers");
+        igniteCfgPropsExcl.add("autoActivationEnabled");
+        igniteCfgPropsExcl.add("igniteHome");
+        igniteCfgPropsExcl.add("platformConfiguration");
 
         metadata.put(IgniteConfiguration.class,
             new MetadataInfo(igniteCfgProps, igniteCfgPropsDep, igniteCfgPropsExcl));

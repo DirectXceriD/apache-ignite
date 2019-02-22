@@ -36,7 +36,7 @@ panel-collapsible(ng-form=form on-open=`ui.loadPanel('${form}')`)
                           or IGNITE_HOME environment variable or system property.'
                 })
             .pc-form-grid-col-60
-                mixin caches-query-list-sql-functions()
+                mixin life-cycle-beans()
                     .ignite-form-field
                         -let items = `${model}.lifecycleBeans`;
 
@@ -65,7 +65,7 @@ panel-collapsible(ng-form=form on-open=`ui.loadPanel('${form}')`)
                                 )
 
                 - var form = '$parent.form'
-                +caches-query-list-sql-functions
+                +life-cycle-beans
                 - var form = 'misc'
             .pc-form-grid-col-60
                 +form-field__java-class({
@@ -81,6 +81,52 @@ panel-collapsible(ng-form=form on-open=`ui.loadPanel('${form}')`)
                     name: '"mBeanServer"',
                     tip: 'MBean server'
                 })
+            .pc-form-grid-col-60
+                .ignite-form-field
+                    +list-text-field({
+                        items: `${model}.includeProperties`,
+                        lbl: 'Include properties',
+                        name: 'includeProperties',
+                        itemName: 'property',
+                        itemsName: 'properties'
+                    })(
+                    list-editable-cols=`::[{
+                            name: 'Include properties:',
+                            tip: 'System or environment property names to include into node attributes'
+                        }]`
+                    )
+                        +form-field__error({error: 'igniteUnique', message: 'Such property already exists!'})
+            .pc-form-grid-col-60
+                mixin store-session-listener-factories()
+                    .ignite-form-field
+                        -let items = `${model}.cacheStoreSessionListenerFactories`;
+
+                        list-editable(
+                            ng-model=items
+                            list-editable-cols=`::[{
+                                name: 'Store session listener factories:',
+                                tip: 'Default store session listener factories for all caches'
+                            }]`
+                        )
+                            list-editable-item-view {{ $item }}
+
+                            list-editable-item-edit
+                                +list-java-class-field('Listener', '$item', '"Listener"', items)
+                                    +form-field__error({
+                                        error: 'igniteUnique',
+                                        message: 'Listener with such class name already exists!'
+                                    })
+
+                            list-editable-no-items
+                                list-editable-add-item-button(
+                                    add-item=`$editLast((${items} = ${items} || []).push(""))`
+                                    label-single='listener'
+                                    label-multiple='listeners'
+                                )
+
+                - var form = '$parent.form'
+                +store-session-listener-factories
+                - var form = 'misc'
             //- Since ignite 2.0
             .pc-form-grid-col-60(ng-if-start='$ctrl.available("2.0.0")')
                 +form-field__text({
@@ -90,12 +136,20 @@ panel-collapsible(ng-form=form on-open=`ui.loadPanel('${form}')`)
                     placeholder: 'Input consistent ID',
                     tip: 'Consistent globally unique node ID which survives node restarts'
                 })
-            .pc-form-grid-col-60(ng-if-end)
+            .pc-form-grid-col-60
                 +form-field__java-class({
                     label: 'Warmup closure:',
                     model: `${model}.warmupClosure`,
                     name: '"warmupClosure"',
                     tip: 'This closure will be executed before actual grid instance start'
+                })
+            .pc-form-grid-col-60(ng-if-end)
+                +form-field__text({
+                    label: 'Instance name:',
+                    model: `${model}.igniteInstanceName`,
+                    name: '"igniteInstanceName"',
+                    placeholder: 'Input instance name',
+                    tip: 'Optional local Ignite instance name'
                 })
             .pc-form-grid-col-60(ng-if='$ctrl.available("2.1.0")')
                 +form-field__number({
@@ -106,6 +160,23 @@ panel-collapsible(ng-form=form on-open=`ui.loadPanel('${form}')`)
                     min: '0',
                     tip: 'Timeout in milliseconds after which long query warning will be printed'
                 })
+            .pc-form-grid-col-60(ng-if='$ctrl.available("2.7.0")')
+                .ignite-form-field
+                    +list-text-field({
+                        items: `${model}.sqlSchemas`,
+                        lbl: 'SQL schemas',
+                        name: 'sqlSchemas',
+                        itemName: 'schema',
+                        itemsName: 'schemas'
+                    })(
+                    list-editable-cols=`::[{
+                            name: 'SQL schemas:',
+                            tip: 'SQL schemas to be created on node startup.<br/>
+                            Schemas are created on local node only and are not propagated to other cluster nodes.<br/>
+                            Created schemas cannot be dropped.'
+                        }]`
+                    )
+                        +form-field__error({error: 'igniteUnique', message: 'Such property already exists!'})
             .pc-form-grid-col-60(ng-if='$ctrl.available("2.8.0")')
                 +form-field__number({
                     label: 'SQL query history size:',
@@ -133,6 +204,13 @@ panel-collapsible(ng-form=form on-open=`ui.loadPanel('${form}')`)
                             <li>Each entry in affinity group - lock transaction has the same affinity key as was specified on affinity transaction start</li>\
                             <li>Each entry in partition group - lock transaction belongs to the same partition as was specified on partition transaction start</li>\
                         </ul>'
+                })
+            .pc-form-grid-col-60(ng-if='$ctrl.available("2.4.0")')
+                +form-field__checkbox({
+                    label: 'Auto activation enabled',
+                    model: model + '.autoActivationEnabled',
+                    name: '"autoActivationEnabled"',
+                    tip: 'Cluster is enabled to activate automatically when all nodes from the BaselineTopology join the cluster'
                 })
             .pc-form-grid-col-60(ng-if='$ctrl.available(["1.0.0", "2.1.0"])')
                 +form-field__checkbox({

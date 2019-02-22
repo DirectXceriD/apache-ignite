@@ -1124,7 +1124,13 @@ module.exports.factory = function(mongoose) {
         lifecycleBeans: [String],
         addressResolver: String,
         mBeanServer: String,
-        networkCompressionLevel: Number
+        networkCompressionLevel: Number,
+        includeProperties: [String],
+        cacheStoreSessionListenerFactories: [String],
+        autoActivationEnabled: {type: Boolean, default: true},
+        sqlSchemas: [String],
+        igniteInstanceName: String,
+        communicationFailureResolver: String
     });
 
     Cluster.index({name: 1, space: 1}, {unique: true});
