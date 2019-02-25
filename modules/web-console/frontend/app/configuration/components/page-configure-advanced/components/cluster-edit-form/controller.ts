@@ -65,6 +65,23 @@ export default class ClusterEditFormController {
                 {value: null, label: 'Default'}
             ];
 
+            this.failureHandlerVariant = [
+                {value: 'RestartProcess', label: 'Restart process'},
+                {value: 'StopNodeOnHalt', label: 'Try stop with timeout'},
+                {value: 'StopNode', label: 'Stop on critical error'},
+                {value: 'Noop', label: 'Disabled'},
+                {value: 'Custom', label: 'Custom'},
+                {value: null, label: 'Default'}
+            ];
+
+            this.ignoredFailureTypes = [
+                {value: 'SEGMENTATION', label: 'SEGMENTATION'},
+                {value: 'SYSTEM_WORKER_TERMINATION', label: 'SYSTEM_WORKER_TERMINATION'},
+                {value: 'SYSTEM_WORKER_BLOCKED', label: 'SYSTEM_WORKER_BLOCKED'},
+                {value: 'CRITICAL_ERROR', label: 'CRITICAL_ERROR'},
+                {value: 'SYSTEM_CRITICAL_OPERATION_TIMEOUT', label: 'SYSTEM_CRITICAL_OPERATION_TIMEOUT'}
+            ];
+
             if (this.available('2.0.0')) {
                 this.eventStorage.push({value: null, label: 'Disabled'});
 

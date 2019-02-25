@@ -1118,7 +1118,15 @@ module.exports.factory = function(mongoose) {
             subIntervals: Number
         },
         mvccVacuumThreadCount: Number,
-        mvccVacuumFrequency: Number
+        mvccVacuumFrequency: Number,
+        failureHandler: {
+            kind: {type: String, enum: ['RestartProcess', 'StopNodeOnHalt', 'StopNode', 'Noop', 'Custom']},
+            ignoredFailureTypes: [{type: String, enum: ['SEGMENTATION', 'SYSTEM_WORKER_TERMINATION',
+                'SYSTEM_WORKER_BLOCKED', 'CRITICAL_ERROR', 'SYSTEM_CRITICAL_OPERATION_TIMEOUT']}],
+            Custom: {
+                className: String
+            }
+        }
     });
 
     Cluster.index({name: 1, space: 1}, {unique: true});

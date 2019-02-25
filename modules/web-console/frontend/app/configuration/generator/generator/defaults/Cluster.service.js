@@ -421,6 +421,9 @@ const DFLT_CLUSTER = {
         sslEnabled: false,
         useIgniteSslContextFactory: true,
         sslClientAuth: false
+    },
+    failureHandler: {
+        ignoredFailureTypes: {clsName: 'org.apache.ignite.failure.FailureType'}
     }
 };
 

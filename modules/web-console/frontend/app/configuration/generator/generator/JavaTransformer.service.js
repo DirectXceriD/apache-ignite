@@ -640,7 +640,10 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
                         if (nonBean) {
                             _.forEach(this._toObject(colTypeClsName, prop.items), (item) => {
-                                sb.append(`${prop.id}.add("${item}");`);
+                                if (this.javaTypesNonEnum.nonEnum(prop.typeClsName))
+                                    sb.append(`${prop.id}.add("${item}");`);
+                                else
+                                    sb.append(`${prop.id}.add(${item});`);
 
                                 sb.emptyLine();
                             });
