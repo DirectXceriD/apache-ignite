@@ -3206,7 +3206,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                                     boolean previousNode = sndState.markLastFailedNodeAlive();
 
                                     if (previousNode)
-                                        failedNodes.remove(failedNodes.size() - 1);
+                                        log.debug("!!!: " + res);
+                                        //failedNodes.remove(failedNodes.size() - 1);
                                     else {
                                         newNextNode = false;
 
