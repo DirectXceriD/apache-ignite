@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteDataStreamer;
+import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
@@ -217,7 +218,9 @@ public class IgnitePdsContinuousRestartTest extends GridCommonAbstractTest {
     public void testRebalancingDuringLoad_8000_8000_8_16() throws Exception {
         checkRebalancingDuringLoad(8000, 8000, 8, 16);
     }
-
+static {
+        System.setProperty(IgniteSystemProperties.IGNITE_FORCE_MVCC_MODE_IN_TESTS,"true");
+}
     /**
      * @throws Exception if failed.
      */
