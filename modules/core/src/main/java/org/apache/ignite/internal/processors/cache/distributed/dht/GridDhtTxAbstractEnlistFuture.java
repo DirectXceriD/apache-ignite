@@ -735,7 +735,7 @@ public abstract class GridDhtTxAbstractEnlistFuture<T> extends GridCacheFutureAd
                 row0.hash(),
                 row0.link(),
                 key.partition(),
-                CacheDataRowAdapter.RowData.NO_KEY,
+                CacheDataRowAdapter.RowData.NO_KEY_WITH_HINTS,
                 row0.mvccCoordinatorVersion(),
                 row0.mvccCounter(),
                 row0.mvccOperationCounter(),
@@ -746,24 +746,16 @@ public abstract class GridDhtTxAbstractEnlistFuture<T> extends GridCacheFutureAd
 
             entry.cacheId(cctx.cacheId());
             entry.version(row.version());
-            entry.mvccVersion(row);
-            entry.newMvccVersion(row);
             entry.value(row.value());
             entry.expireTime(row.expireTime());
 
+            // Row should be retrieved with actual hints.
+            entry.mvccVersion(row);
+            entry.mvccTxState(row.mvccTxState());
+            entry.newMvccVersion(row);
+            entry.newMvccTxState(row.newMvccTxState());
+
             assert mvccSnapshot.coordinatorVersion() != MvccUtils.MVCC_CRD_COUNTER_NA;
-
-            if (MvccUtils.compare(mvccSnapshot, row.mvccCoordinatorVersion(), row.mvccCounter()) != 0) {
-                entry.mvccTxState(row.mvccTxState() != TxState.NA ? row.mvccTxState() :
-                    MvccUtils.state(cctx, row.mvccCoordinatorVersion(), row.mvccCounter(), row.mvccOperationCounter()));
-            }
-
-            if (row.newMvccCoordinatorVersion() != MvccUtils.MVCC_CRD_COUNTER_NA
-                && MvccUtils.compare(mvccSnapshot, row.newMvccCoordinatorVersion(), row.newMvccCounter()) != 0) {
-                entry.newMvccTxState(row.newMvccTxState() != TxState.NA ? row.newMvccTxState() :
-                    MvccUtils.state(cctx, row.newMvccCoordinatorVersion(), row.newMvccCounter(),
-                        row.newMvccOperationCounter()));
-            }
 
             res.add(entry);
         }
